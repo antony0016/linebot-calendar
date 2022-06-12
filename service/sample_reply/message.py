@@ -1,52 +1,52 @@
-#這些是LINE官方開放的套件組合透過import來套用這個檔案上
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
 from linebot.models import *
 
-#ImagemapSendMessage(組圖訊息)
-def imagemap_message():
+
+# ImageMapSendMessage(組圖訊息)
+def image_map_message():
     message = ImagemapSendMessage(
         base_url="https://i.imgur.com/BfTFVDN.jpg",
         alt_text='最新的合作廠商有誰呢？',
         base_size=BaseSize(height=2000, width=2000),
         actions=[
             URIImagemapAction(
-                #家樂福
+                # 家樂福
                 link_uri="https://tw.shop.com/search/%E5%AE%B6%E6%A8%82%E7%A6%8F",
                 area=ImagemapArea(
                     x=0, y=0, width=1000, height=1000
                 )
             ),
             URIImagemapAction(
-                #生活市集
+                # 生活市集
                 link_uri="https://tw.shop.com/search/%E7%94%9F%E6%B4%BB%E5%B8%82%E9%9B%86",
                 area=ImagemapArea(
                     x=1000, y=0, width=1000, height=1000
                 )
             ),
             URIImagemapAction(
-                #阿瘦皮鞋
+                # 阿瘦皮鞋
                 link_uri="https://tw.shop.com/search/%E9%98%BF%E7%98%A6%E7%9A%AE%E9%9E%8B",
                 area=ImagemapArea(
                     x=0, y=1000, width=1000, height=1000
                 )
             ),
             URIImagemapAction(
-                #塔吉特千層蛋糕
+                # 塔吉特千層蛋糕
                 link_uri="https://tw.shop.com/search/%E5%A1%94%E5%90%89%E7%89%B9",
                 area=ImagemapArea(
                     x=1000, y=1000, width=1000, height=500
                 )
             ),
-#            URIImagemapAction(
-#                #亞尼克生乳捲
-#                link_uri="https://tw.shop.com/search/%E4%BA%9E%E5%B0%BC%E5%85%8B",
-#                area=ImagemapArea(
-#                    x=1000, y=1500, width=1000, height=500
-#                )
-#            ),
+            #            URIImagemapAction(
+            #                #亞尼克生乳捲
+            #                link_uri="https://tw.shop.com/search/%E4%BA%9E%E5%B0%BC%E5%85%8B",
+            #                area=ImagemapArea(
+            #                    x=1000, y=1500, width=1000, height=500
+            #                )
+            #            ),
             URIImagemapAction(
-                #提摩西·夏勒梅
+                # 提摩西·夏勒梅
                 link_uri="https://zh.wikipedia.org/zh-tw/%E6%8F%90%E6%91%A9%E8%A5%BF%C2%B7%E5%A4%8F%E5%8B%92%E6%A2%85",
                 area=ImagemapArea(
                     x=1000, y=1500, width=1000, height=500
@@ -57,7 +57,8 @@ def imagemap_message():
     )
     return message
 
-#TemplateSendMessage - ButtonsTemplate (按鈕介面訊息)
+
+# TemplateSendMessage - ButtonsTemplate (按鈕介面訊息)
 def buttons_message():
     message = TemplateSendMessage(
         alt_text='好消息來囉～',
@@ -87,9 +88,9 @@ def buttons_message():
     )
     return message
 
-#TemplateSendMessage - ConfirmTemplate(確認介面訊息)
-def Confirm_Template():
 
+# TemplateSendMessage - ConfirmTemplate(確認介面訊息)
+def confirm_template():
     message = TemplateSendMessage(
         alt_text='是否註冊成為會員？',
         template=ConfirmTemplate(
@@ -109,9 +110,10 @@ def Confirm_Template():
     )
     return message
 
-#旋轉木馬按鈕訊息介面
 
-def Carousel_Template():
+# 旋轉木馬按鈕訊息介面
+
+def carousel_template():
     message = TemplateSendMessage(
         alt_text='一則旋轉木馬按鈕訊息',
         template=CarouselTemplate(
@@ -178,7 +180,8 @@ def Carousel_Template():
     )
     return message
 
-#TemplateSendMessage - ImageCarouselTemplate(圖片旋轉木馬)
+
+# TemplateSendMessage - ImageCarouselTemplate(圖片旋轉木馬)
 def image_carousel_message1():
     message = TemplateSendMessage(
         alt_text='圖片旋轉木馬',
@@ -224,4 +227,164 @@ def image_carousel_message1():
     )
     return message
 
-#關於LINEBOT聊天內容範例
+
+# 功能列表
+def function_list():
+    message = TemplateSendMessage(
+        alt_text='功能列表',
+        template=CarouselTemplate(
+            columns=[
+                CarouselColumn(
+                    thumbnail_image_url='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkl5qgGtBxZbBu921rynn7HN7C7JaD_Hbi5cMMV5gEgQu2mE-rIw',
+                    title='Maso萬事屋百貨',
+                    text='百萬種商品一站購足',
+                    actions=[
+                        MessageTemplateAction(
+                            label='關於Maso百貨',
+                            text='Maso萬事屋百貨是什麼呢？'
+                        ),
+                        URITemplateAction(
+                            label='點我逛百貨',
+                            uri='https://tw.shop.com/maso0310'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://www.youtaker.com/video2015/promo/images/promo-vip.png',
+                    title='註冊成為會員',
+                    text='免費獲得會員好康！',
+                    actions=[
+                        MessageTemplateAction(
+                            label='會員優惠資訊',
+                            text='我想瞭解註冊會員的好處是什麼'
+                        ),
+                        URITemplateAction(
+                            label='點我註冊會員',
+                            uri='https://tw.shop.com/nbts/create-myaccount.xhtml?returnurl=https%3A%2F%2Ftw.shop.com%2F'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://img.shop.com/Image/Images/11module/MABrands/opc3Chews_usa_32979_LogoTreatment_200x75.svg',
+                    title='獨家商品',
+                    text='百種優質獨家商品',
+                    actions=[
+                        MessageTemplateAction(
+                            label='點我看產品目錄',
+                            text='獨家商品有哪些？'
+                        ),
+                        URITemplateAction(
+                            label='購買獨家品牌',
+                            uri='https://tw.shop.com/info/our-brands'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://img.shop.com/Image/featuredhotdeal/GOMAJI1551245496503.jpg',
+                    title='優惠資訊',
+                    text='隨時更新最新優惠',
+                    actions=[
+                        MessageTemplateAction(
+                            label='抽一個優惠',
+                            text='抽優惠資訊'
+                        ),
+                        URITemplateAction(
+                            label='近期優惠資訊',
+                            uri='https://tw.shop.com/hot-deals'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://img.shop.com/Image/featuredhotdeal/Carrefour1551245288925.jpg',
+                    title='最新消息',
+                    text='最新活動訊息',
+                    actions=[
+                        MessageTemplateAction(
+                            label='點我看最新消息',
+                            text='我想瞭解最新活動'
+                        ),
+                        URITemplateAction(
+                            label='活動資訊頁面',
+                            uri='https://tw.shop.com/hot-deals'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='http://img.technews.tw/wp-content/uploads/2014/05/TechNews-624x482.jpg',
+                    title='每日新知',
+                    text='定期更新相關資訊',
+                    actions=[
+                        MessageTemplateAction(
+                            label='點我看每日新知',
+                            text='抽一則每日新知'
+                        ),
+                        URITemplateAction(
+                            label='更多更新內容',
+                            uri='https://www.youtube.com/channel/UCpzVAEwEs9AwT2uAOZuxaRQ?view_as=subscriber'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://www.wecooperation.com/makemoney/%E7%9F%A5%E5%90%8D%E5%A4%A5%E4%BC%B4%E5%95%86%E5%BA%97.png',
+                    title='好店分享',
+                    text='優質商品介紹與分享',
+                    actions=[
+                        MessageTemplateAction(
+                            label='夥伴商店推薦',
+                            text='抽一家夥伴商店'
+                        ),
+                        URITemplateAction(
+                            label='查詢夥伴商店',
+                            uri='https://tw.shop.com/stores-a-z'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://img.shop.com/Image/Images/landingPages/ps-recruit/twn-ps-recruit-header.jpg',
+                    title='招商說明',
+                    text='與Shop.com合作',
+                    actions=[
+                        MessageTemplateAction(
+                            label='招商資訊',
+                            text='如何成為夥伴商店'
+                        ),
+                        URITemplateAction(
+                            label='招商說明報名頁面',
+                            uri='https://tw.shop.com/ps_recruit_intro-v.xhtml?tkr=180530162209'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://images.marketamerica.com/site/br/images/logos/awards/torch-award-ethics-2018.jpg',
+                    title='微型創業資訊',
+                    text='加入網路微型創業趨勢',
+                    actions=[
+                        MessageTemplateAction(
+                            label='瞭解更多',
+                            text='什麼是微型創業資訊'
+                        ),
+                        URITemplateAction(
+                            label='公司簡介',
+                            uri='https://www.marketamerica.com/?localeCode=zh-Hant&redirect=true'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    thumbnail_image_url='https://scontent-sjc3-1.xx.fbcdn.net/v/t1.0-1/p320x320/50934385_2553136691368417_7766092240367124480_n.jpg?_nc_cat=109&_nc_ht=scontent-sjc3-1.xx&oh=c144a6b45450781ccaf258beb40bc53e&oe=5D228BF1',
+                    title='聯繫Maso本人',
+                    text='直接聯繫Maso',
+                    actions=[
+                        MessageTemplateAction(
+                            label='誰是Maso?',
+                            text='Maso是誰？想認識'
+                        ),
+                        URITemplateAction(
+                            label='加我的LINE',
+                            uri='https://line.me/ti/p/KeRocPY6PP'
+                        )
+                    ]
+                )
+            ]
+        )
+    )
+    return message
