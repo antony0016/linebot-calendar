@@ -1,7 +1,9 @@
-from linebot import (LineBotApi, WebhookHandler)
-from linebot.exceptions import (InvalidSignatureError)
+# models
 from model.db import create_session
 from model.user import User
+
+# request
+from public.response import PostbackRequest
 
 from linebot.models import (
     # message
@@ -32,26 +34,24 @@ from linebot.models import (
 
 
 def create_todo(event):
-    session = create_session()
-
+    new_event = PostbackRequest(model='event', method='create')
     return TemplateSendMessage(
         alt_text='建立行事曆!',
         template=ButtonsTemplate(
-            thumbnail_image_url="https://pic2.zhimg.com/v2-de4b8114e8408d5265503c8b41f59f85_b.jpg",
             title="要建立哪種行事曆？",
             text="請選擇行事曆類型",
             actions=[
                 PostbackTemplateAction(
-                    label="Todo",
-                    data="$todo"
+                    label="代辦事項",
+                    data=new_event.dumps(data={'type': 'todo'})
                 ),
                 PostbackTemplateAction(
                     label="行程",
-                    data="$event"
+                    data=new_event.dumps(data={'type': 'event'})
                 ),
                 PostbackTemplateAction(
                     label="提醒",
-                    data="$remi"
+                    data=new_event.dumps(data={'type': 'reminder'})
                 ),
             ]
         )

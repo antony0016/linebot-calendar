@@ -1,11 +1,38 @@
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
-from linebot.models import *
+from service.other_service import get_weather
+from constant.constants import CITIES
+from linebot.models import (
+    # message
+    TextSendMessage,
+    ImagemapSendMessage,
+    TemplateSendMessage,
+
+    # template
+    ButtonsTemplate,
+    ConfirmTemplate,
+    PostbackTemplateAction,
+    ImageCarouselTemplate,
+    ImageCarouselColumn,
+    CarouselTemplate,
+    CarouselColumn,
+
+    # action
+    URIImagemapAction,
+    DatetimePickerTemplateAction,
+    MessageTemplateAction,
+    URITemplateAction,
+    URIAction,
+
+    # others
+    ImagemapArea,
+    BaseSize,
+)
 
 
 # ImageMapSendMessage(組圖訊息)
-def image_map_message():
-    message = ImagemapSendMessage(
+def image_map_message(event):
+    return ImagemapSendMessage(
         base_url="https://i.imgur.com/BfTFVDN.jpg",
         alt_text='最新的合作廠商有誰呢？',
         base_size=BaseSize(height=2000, width=2000),
@@ -55,12 +82,11 @@ def image_map_message():
 
         ]
     )
-    return message
 
 
 # TemplateSendMessage - ButtonsTemplate (按鈕介面訊息)
-def buttons_message():
-    message = TemplateSendMessage(
+def buttons_message(event):
+    return TemplateSendMessage(
         alt_text='好消息來囉～',
         template=ButtonsTemplate(
             thumbnail_image_url="https://pic2.zhimg.com/v2-de4b8114e8408d5265503c8b41f59f85_b.jpg",
@@ -86,12 +112,11 @@ def buttons_message():
             ]
         )
     )
-    return message
 
 
 # TemplateSendMessage - ConfirmTemplate(確認介面訊息)
-def confirm_template():
-    message = TemplateSendMessage(
+def confirm_template(event):
+    return TemplateSendMessage(
         alt_text='是否註冊成為會員？',
         template=ConfirmTemplate(
             text="是否註冊成為會員？",
@@ -108,13 +133,11 @@ def confirm_template():
             ]
         )
     )
-    return message
 
 
 # 旋轉木馬按鈕訊息介面
-
-def carousel_template():
-    message = TemplateSendMessage(
+def carousel_template(event):
+    return TemplateSendMessage(
         alt_text='一則旋轉木馬按鈕訊息',
         template=CarouselTemplate(
             columns=[
@@ -178,12 +201,11 @@ def carousel_template():
             ]
         )
     )
-    return message
 
 
 # TemplateSendMessage - ImageCarouselTemplate(圖片旋轉木馬)
-def image_carousel_message1():
-    message = TemplateSendMessage(
+def image_carousel_message1(event):
+    return TemplateSendMessage(
         alt_text='圖片旋轉木馬',
         template=ImageCarouselTemplate(
             columns=[
@@ -225,12 +247,50 @@ def image_carousel_message1():
             ]
         )
     )
-    return message
+
+
+# test_template_message
+def test_template_message(event):
+    return TemplateSendMessage(
+        alt_text='圖片旋轉木馬',
+        template=ImageCarouselTemplate(
+            columns=[
+                ImageCarouselColumn(
+                    image_url="https://i.imgur.com/uKYgfVs.jpg",
+                    action=URITemplateAction(
+                        label="新鮮水果",
+                        uri="http://img.juimg.com/tuku/yulantu/110709/222-110F91G31375.jpg"
+                    )
+                ),
+                ImageCarouselColumn(
+                    image_url="https://i.imgur.com/QOcAvjt.jpg",
+                    action=URITemplateAction(
+                        label="新鮮蔬菜",
+                        uri="https://cdn.101mediaimage.com/img/file/1410464751urhp5.jpg"
+                    )
+                ),
+                ImageCarouselColumn(
+                    image_url="https://i.imgur.com/Np7eFyj.jpg",
+                    action=URITemplateAction(
+                        label="可愛狗狗",
+                        uri="http://imgm.cnmo-img.com.cn/appimg/screenpic/big/674/673928.JPG"
+                    )
+                ),
+                ImageCarouselColumn(
+                    image_url="https://i.imgur.com/QRIa5Dz.jpg",
+                    action=URITemplateAction(
+                        label="可愛貓咪",
+                        uri="https://m-miya.net/wp-content/uploads/2014/07/0-065-1.min_.jpg"
+                    )
+                )
+            ]
+        )
+    )
 
 
 # 功能列表
-def function_list():
-    message = TemplateSendMessage(
+def function_list(event):
+    return TemplateSendMessage(
         alt_text='功能列表',
         template=CarouselTemplate(
             columns=[
@@ -310,7 +370,7 @@ def function_list():
                     ]
                 ),
                 CarouselColumn(
-                    thumbnail_image_url='http://img.technews.tw/wp-content/uploads/2014/05/TechNews-624x482.jpg',
+                    thumbnail_image_url='https://img.technews.tw/wp-content/uploads/2014/05/TechNews-624x482.jpg',
                     title='每日新知',
                     text='定期更新相關資訊',
                     actions=[
@@ -387,4 +447,37 @@ def function_list():
             ]
         )
     )
-    return message
+
+
+# 天氣
+def weather_search(event):
+    message = event.message.text
+
+    if '-' not in message:
+        return TextSendMessage(text="查詢格式為: 天氣-縣市")
+    city = message.replace(' ', '').split('-')[1].replace('台', '臺')
+    if city not in CITIES:
+        return TextSendMessage(text="查詢格式為: 天氣-縣市")
+    res = get_weather(city)
+    return TemplateSendMessage(
+        alt_text=city + '未來 36 小時天氣預測',
+        template=CarouselTemplate(
+            columns=[
+                CarouselColumn(
+                    thumbnail_image_url='https://i.imgur.com/Ex3Opfo.png',
+                    title='{} ~ {}'.format(res[0][0]['startTime'][5:-3], res[0][0]['endTime'][5:-3]),
+                    text='天氣狀況 {}\n溫度 {} ~ {} °C\n降雨機率 {}'.format(data[0]['parameter']['parameterName'],
+                                                                  data[2]['parameter']['parameterName'],
+                                                                  data[4]['parameter']['parameterName'],
+                                                                  data[1]['parameter'][
+                                                                      'parameterName']),
+                    actions=[
+                        URIAction(
+                            label='詳細天氣資訊',
+                            uri='https://www.cwb.gov.tw/V8/C/W/County/index.html'
+                        )
+                    ]
+                ) for data in res
+            ]
+        )
+    )
