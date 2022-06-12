@@ -1,5 +1,6 @@
 # python official imports
 import os
+from dotenv import load_dotenv, dotenv_values
 
 # open source lib imports
 from flask import Flask, request, abort
@@ -8,9 +9,6 @@ from linebot import (
 )
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import *
-
-# constants
-from constant.constants import CHANNEL_ACCESS_TOKEN, CHANNEL_SECRET
 
 # model related imports
 from model.db import create_db, create_default_data
@@ -24,15 +22,18 @@ from service.handler import (
     followed_event_handler,
 )
 
+DEBUG = True
+load_dotenv(dotenv_path='./.env.development') if DEBUG else load_dotenv(dotenv_path='.env')
+
 # flask instance
 app = Flask(__name__)
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 
 # Channel Access Token
-line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
+line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 
 # Channel Secret
-handler = WebhookHandler(CHANNEL_SECRET)
+handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 
 # 監聽所有來自 /callback 的 Post Request

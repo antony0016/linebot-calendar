@@ -3,4 +3,5 @@ flask~=2.1.2
 
 requests~=2.27.1
 SQLAlchemy~=1.4.37
+pyodbc~=4.0.32
 python-dotenv~=0.20.0
