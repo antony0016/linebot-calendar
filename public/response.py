@@ -8,7 +8,7 @@ class PostbackRequest:
         self.method = method
         self.data = data
         if raw_data is not '':
-            self.loads(raw_data)
+            self.loads(raw_data.replace('+', ' '))
 
     def dumps(self, data=None) -> str:
         if data is not None:

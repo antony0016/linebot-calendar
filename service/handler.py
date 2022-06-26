@@ -5,7 +5,7 @@ from public.response import PostbackRequest
 
 # reply processor mapper
 from service.sample_reply.reply import sample_replies
-from service.todo_reply.reply import todo_replies, function_mapper
+from service.todo_reply.reply import todo_replies, action_mapper
 
 # models
 from model.db import create_session
@@ -56,7 +56,8 @@ def text_message_handler(event):
 def postback_message_handler(event):
     raw_data = event.postback.data
     data = PostbackRequest(raw_data=raw_data)
-    for model, methods in function_mapper:
+    for model in action_mapper:
+        methods = action_mapper[model]
         if data.model == model and data.method in methods.keys():
             return methods[data.method](event)
     return TextMessage(text="命令出錯了(っ °Д °;)っ")

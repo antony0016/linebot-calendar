@@ -12,7 +12,7 @@ from model.db import create_db
 from model.user import User
 from model.todo import Event, EventType, EventMember, EventSetting
 
-# Linebot reply instance
+# Line bot reply instance
 from public.instance import line_bot_api, handler
 
 # event handler

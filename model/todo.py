@@ -55,13 +55,23 @@ class Event(Base):
     event_type = relationship('EventType', back_populates='events')
 
     @staticmethod
+    def all_event(line_id):
+        session = create_session()
+        user = session.query(User).filter(User.line_id == line_id).first()
+        events = session.query(Event).filter(Event.create_uid == user.id).all()
+        session.close()
+        return events
+
+    @staticmethod
     def create_event(type_id, line_id):
         session = create_session()
         event_type = session.query(EventType).filter(EventType.id == type_id).first()
         user = session.query(User).filter(User.line_id == line_id).first()
-        new_event = Event(user_id=user.id, type_id=event_type.id)
+        new_event = Event(create_uid=user.id, type_id=event_type.id)
         session.add(new_event)
         session.commit()
+        session.refresh(new_event)
+        session.close()
         return new_event
 
 
@@ -77,6 +87,39 @@ class EventSetting(Base):
     title = Column(String)
     description = Column(String)
     start_time = Column(DateTime)
+
+    @staticmethod
+    def all_event_setting():
+        session = create_session()
+        event_settings = session.query(EventSetting).all()
+        session.close()
+        return event_settings
+
+    @staticmethod
+    def create_event_setting(event_id):
+        session = create_session()
+        new_event_setting = EventSetting(event_id=event_id)
+        session.add(new_event_setting)
+        session.commit()
+        session.close()
+        return new_event_setting
+
+    @staticmethod
+    def update_event_setting(event_id, title=None, description=None, start_time=None):
+        session = create_session()
+        event_setting = session.query(EventSetting).filter(EventSetting.event_id == event_id).first()
+        if event_setting is None:
+            event_setting = EventSetting.create_event_setting(event_id)
+        if title is not None:
+            event_setting.title = title
+        if description is not None:
+            event_setting.description = description
+        if start_time is not None:
+            event_setting.start_time = start_time
+        session.commit()
+        session.refresh(event_setting)
+        session.close()
+        return event_setting
 
 
 class EventMember(Base):

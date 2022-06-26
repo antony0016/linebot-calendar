@@ -1,7 +1,7 @@
 # models
 from model.db import create_session
 from model.user import User
-from model.todo import EventType
+from model.todo import EventType, Event, EventSetting
 
 # request
 from public.response import PostbackRequest
@@ -35,7 +35,7 @@ from linebot.models import (
 
 
 def create_todo(event):
-    line_id = event.sourse.user_id
+    line_id = event.source.user_id
     new_event = PostbackRequest(model='event', method='create')
     event_types = EventType.get_types()
     actions = []
@@ -54,6 +54,20 @@ def create_todo(event):
             actions=actions,
         )
     )
+
+
+def list_todo(event):
+    # session = create_session()
+    events = Event.all_event(event.source.user_id)
+    events_id = []
+    for e in events:
+        events_id.append(e.id)
+    event_settings = EventSetting.all_event_setting()
+    my_es = []
+    for es in event_settings:
+        if es.event_id in events_id:
+            my_es.append(es)
+    return TextSendMessage(text="目前有{}項行事曆".format(str(len(my_es))))
 
 
 def db_test(event):
