@@ -1,4 +1,4 @@
-from service.sample_reply.message import (
+from service.sample_reply.text_functions import (
     image_map_message,
     buttons_message,
     confirm_template,

@@ -1,17 +1,17 @@
-from service.todo_reply.text_message import (
+from service.todo_reply.text_functions import (
     create_todo,
     list_todo,
     db_test,
 )
 
-from service.todo_reply.postback_message import (
+from service.todo_reply.postback_functions import (
     create_event_by_type,
     update_event_by_event_id,
 )
 
 # from
 
-todo_replies = [
+todo_text_replies = [
     {
         'trigger': '行事曆列表',
         'reply': list_todo,
@@ -26,7 +26,7 @@ todo_replies = [
     },
 ]
 
-action_mapper = {
+todo_postback_replies = {
     'event': {
         'create': create_event_by_type,
     },

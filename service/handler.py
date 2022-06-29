@@ -4,8 +4,8 @@ import json
 from public.response import PostbackRequest
 
 # reply processor mapper
-from service.sample_reply.reply import sample_replies
-from service.todo_reply.reply import todo_replies, action_mapper
+from service.sample_reply.triggers import sample_replies
+from service.todo_reply.triggers import todo_text_replies, todo_postback_replies
 
 # models
 from model.db import create_session
@@ -47,17 +47,18 @@ from linebot.models import (
 
 def text_message_handler(event):
     message = event.message.text
-    for reply in sample_replies + todo_replies:
+    replies = sample_replies + todo_text_replies
+    for reply in replies:
         if reply['trigger'] in message:
             return reply['reply'](event)
     return TextMessage(text="這個訊息我沒辦法回覆ψ(._. )>")
 
 
 def postback_message_handler(event):
-    raw_data = event.postback.data
-    data = PostbackRequest(raw_data=raw_data)
-    for model in action_mapper:
-        methods = action_mapper[model]
+    data = PostbackRequest(raw_data=event.postback.data)
+    replies = todo_postback_replies
+    for model in replies:
+        methods = replies[model]
         if data.model == model and data.method in methods.keys():
             return methods[data.method](event)
     return TextMessage(text="命令出錯了(っ °Д °;)っ")

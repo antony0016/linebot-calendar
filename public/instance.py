@@ -17,3 +17,11 @@ engine = create_engine(os.getenv('CONNECT_STRING'), echo=True)
 # linebot
 line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
+
+# flask instance
+flask_instance = None
+
+
+def logger_setting(app):
+    global flask_instance
+    flask_instance = app

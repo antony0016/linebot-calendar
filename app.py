@@ -13,7 +13,7 @@ from model.user import User
 from model.todo import Event, EventType, EventMember, EventSetting
 
 # Line bot reply instance
-from public.instance import line_bot_api, handler
+from public.instance import line_bot_api, handler, logger_setting
 
 # event handler
 from service.handler import (
@@ -25,6 +25,8 @@ from service.handler import (
 # flask instance
 app = Flask(__name__)
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
+
+logger_setting(app)
 
 
 # 監聽所有來自 /callback 的 Post Request
