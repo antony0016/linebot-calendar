@@ -1,5 +1,6 @@
 from service.todo_reply.text_functions import (
     create_todo,
+    update_todo,
     list_todo,
     db_test,
 )
@@ -12,6 +13,10 @@ from service.todo_reply.postback_functions import (
 # from
 
 todo_text_replies = [
+    {
+        'trigger': '@event',
+        'reply': update_todo,
+    },
     {
         'trigger': '行事曆列表',
         'reply': list_todo,

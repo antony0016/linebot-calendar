@@ -109,7 +109,10 @@ class EventSetting(Base):
         session = create_session()
         event_setting = session.query(EventSetting).filter(EventSetting.event_id == event_id).first()
         if event_setting is None:
-            event_setting = EventSetting.create_event_setting(event_id)
+            session.close()
+            EventSetting.create_event_setting(event_id)
+            session = create_session()
+            event_setting = session.query(EventSetting).filter(EventSetting.event_id == event_id).first()
         if title is not None:
             event_setting.title = title
         if description is not None:
