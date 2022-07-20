@@ -11,6 +11,10 @@ from service.sample_reply.text_functions import (
 
 sample_replies = [
     {
+        'trigger': '資訊',
+        'reply': image_map_message
+    },
+    {
         'trigger': '最新合作廠商',
         'reply': image_map_message
     },
