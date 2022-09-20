@@ -20,6 +20,7 @@ from service.handler import (
     text_message_handler,
     postback_message_handler,
     followed_event_handler,
+    joined_event_handler,
 )
 
 # flask instance
@@ -66,8 +67,14 @@ def friend_added(event):
     line_bot_api.reply_message(event.reply_token, reply)
 
 
+@handler.add(JoinEvent)
+def group_joined(event):
+    reply = joined_event_handler(event)
+    line_bot_api.reply_message(event.reply_token, reply)
+
+
 if __name__ == "__main__":
     create_db()
     EventType.create_default_event_types()
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=True)

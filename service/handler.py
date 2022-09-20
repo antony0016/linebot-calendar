@@ -1,11 +1,12 @@
 import json
 
 # response define
-from public.response import PostbackRequest
+from public.response import PostbackRequest, normal_messages
 
 # reply processor mapper
 from service.sample_reply.triggers import sample_replies
 from service.todo_reply.triggers import todo_text_replies, todo_postback_replies
+from service.todo_reply.text_functions import create_menu
 
 # models
 from model.db import create_session
@@ -51,6 +52,8 @@ def text_message_handler(event):
     for reply in replies:
         if reply['trigger'] in message:
             return reply['reply'](event)
+    if '*' in message:
+        TextMessage(text="----------------")
     return TextMessage(text="這個訊息我沒辦法回覆ψ(._. )>")
 
 
@@ -66,7 +69,22 @@ def postback_message_handler(event):
 
 def followed_event_handler(event):
     line_id = event.source.user_id
-    user = User.create_or_get(line_id)
-    if user.id is None:
-        return TextMessage(text='設定帳號失敗，請嘗試重新加入本帳號!')
-    return TextMessage(text='您的line id為{}，歡迎使用本服務'.format(user.line_id))
+    # session = create_session()
+    # user = User.create_or_get(session, line_id)
+    # reply = TextMessage(text='您的line id為{}，歡迎使用本服務'.format(user.line_id))
+    # if user.id is None:
+    #     reply = TextMessage(text='設定帳號失敗，請嘗試重新加入本帳號!')
+    # session.close()
+    columns = normal_messages['add_event_columns']['single'] + normal_messages['add_event_columns']['group']
+    reply = TemplateSendMessage(
+        alt_text='感謝加入本帳號好友！',
+        template=CarouselTemplate(
+            columns=columns,
+        )
+    )
+    return reply
+
+
+# todo: 新增好友時指令提示
+def joined_event_handler(event):
+    return create_menu(event)

@@ -1,11 +1,10 @@
 from public.instance import Base
 
-from model.db import create_session
-
 from sqlalchemy import Column
 from sqlalchemy import Integer, DateTime, String
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.session import Session
 
 
 class User(Base):
@@ -18,12 +17,10 @@ class User(Base):
     events = relationship('Event', back_populates='create_user')
 
     @staticmethod
-    def create_or_get(line_id):
-        session = create_session()
+    def create_or_get(session: Session, line_id):
         user = session.query(User).filter(User.line_id == line_id).first()
         if user is None:
             user = User(line_id=line_id)
             session.add(user)
             session.commit()
-        session.close()
         return user
