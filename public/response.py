@@ -26,17 +26,23 @@ class PostbackRequest:
         self.data = data['data']
 
 
-def get_event_settings(event_settings: List[EventSetting]):
+def get_event_settings_response(event_settings: List[EventSetting]):
     columns = []
     new_data = PostbackRequest(model='event', method='update')
     delete_data = PostbackRequest(model='event', method='delete')
     for event_setting in event_settings[:10]:
-        event_date = event_setting.start_time.isoformat().split('T')[0]
-        event_time = event_setting.start_time.isoformat().split('T')[1]
+        event_date = '未設定'
+        event_time = '未設定'
+        event_description = '未設定'
+        if event_setting.start_time is not None:
+            event_date = event_setting.start_time.isoformat().split('T')[0]
+            event_time = event_setting.start_time.isoformat().split('T')[1]
+        if event_setting.description is not None or event_setting.description != '':
+            event_description = event_setting.description
         columns.append(CarouselColumn(
             title=str(event_setting.title),
             text='敘述：{}\n日期：{}\n時間：{}'
-            .format(str(event_setting.description), event_date, event_time),
+            .format(str(event_description), event_date, event_time),
             actions=[
                 PostbackTemplateAction(
                     label="細節設定",
@@ -59,7 +65,7 @@ command_text = {
     'todo': """$提醒$待辦事項名稱$備註$時間""",
 }
 
-normal_messages = {
+default_messages = {
     'add_event_columns': {
         'single': [
             CarouselColumn(

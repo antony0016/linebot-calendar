@@ -3,10 +3,10 @@ from model.user import User
 
 from datetime import datetime
 
-from public.instance import Base
+from public.instance import Base, flask_instance
 
 from sqlalchemy import Column, func
-from sqlalchemy import Integer, DateTime, String, ForeignKey
+from sqlalchemy import Integer, DateTime, String, ForeignKey, Boolean
 # from model.db import MyBase
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
@@ -71,13 +71,13 @@ class Event(Base):
         return events
 
     @staticmethod
-    def create_event(session: Session, type_id, line_id):
+    def create_event(session: Session, type_id, line_id, is_group=False):
         event_type = session.query(EventType).filter(EventType.id == type_id).first()
         user = User.create_or_get(session, line_id)
         new_event = Event(create_uid=user.id, type_id=event_type.id)
         session.add(new_event)
         session.commit()
-        EventSetting.create_event_setting(session, new_event.id)
+        EventSetting.create_event_setting(session, new_event.id, is_group=is_group)
         session.refresh(new_event)
         return new_event
 
@@ -103,37 +103,56 @@ class EventSetting(Base):
     event_id = Column(ForeignKey('event.id'), nullable=False, unique=True)
     event = relationship('Event', back_populates='setting')
 
-    title = Column(String, default='')
-    description = Column(String, default='')
+    is_group = Column(Boolean, default=False)
+    title = Column(String, default='未設定標題')
+    description = Column(String, default='未設定敘述')
     start_time = Column(DateTime)
 
     @staticmethod
-    def all_event_setting(session: Session, line_id, type_id=-1):
+    def all_event_setting(session: Session, line_id, type_id=-1, is_group=False):
+        user = User.create_or_get(session, line_id)
+        events = session.query(Event).filter(Event.create_uid == user.id).all()
         if type_id == -1:
-            return session.query(EventSetting).all()
-        events = session.query(Event).filter(Event.type_id == type_id).all()
+            events = session.query(Event).filter(Event.create_uid == user.id).all()
+        else:
+            session.query(Event).filter(
+                Event.type_id == type_id, Event.create_uid == user.id
+            ).all()
         event_settings = []
         for event in events:
-            es = session.query(EventSetting).filter(EventSetting.event_id == event.id).first()
-            if es is not None:
-                event_settings.append(es)
+            es = session.query(EventSetting) \
+                .filter(EventSetting.event_id == event.id).first()
+            if es is None:
+                continue
+            if is_group and es.is_group is False:
+                continue
+            event_settings.append(es)
+        event_settings.reverse()
         return event_settings
 
     @staticmethod
-    def create_event_setting(session: Session, event_id):
-        new_event_setting = EventSetting(event_id=event_id)
+    def create_event_setting(session: Session, event_id, is_group=False):
+        new_event_setting = EventSetting(event_id=event_id, is_group=is_group)
         session.add(new_event_setting)
         session.commit()
         return new_event_setting
 
     @staticmethod
-    def get_event_setting_by_event_id(session: Session, event_id):
-        event_setting = session.query(EventSetting).filter(EventSetting.event_id == event_id)
+    def get_event_setting_by_event_id(session: Session, event_id, is_group=False):
+        if is_group:
+            event_setting = session.query(EventSetting).filter(
+                EventSetting.event_id == event_id,
+                EventSetting.is_group == is_group
+            ).first()
+        else:
+            event_setting = session.query(EventSetting).filter(
+                EventSetting.event_id == event_id,
+            ).first()
         return event_setting
 
     @staticmethod
     def update_event_setting(session: Session, event_id, title=None, description=None, start_time: datetime = None):
-        event_setting = session.query(EventSetting).filter(EventSetting.event_id == event_id).first()
+        event_setting = EventSetting.get_event_setting_by_event_id(session, event_id)
         if event_setting is None:
             EventSetting.create_event_setting(session, event_id)
             event_setting = session.query(EventSetting).filter(EventSetting.event_id == event_id).first()
@@ -172,7 +191,7 @@ class EventMember(Base):
         return event_member
 
     @staticmethod
-    def delete_member(session: Session, event_id, line_id):
+    def delete_member(session: Session, event_id, line_id) -> bool:
         user = User.create_or_get(session, line_id)
         delete_count = session.query(EventMember).filter(
             EventMember.member_id == user.id and EventMember.event_id == event_id

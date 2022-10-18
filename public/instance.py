@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
+from flask import Flask
+
 from linebot import (
     LineBotApi, WebhookHandler
 )
@@ -19,9 +21,9 @@ line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 # flask instance
-flask_instance = None
+flask_instance: Flask = None
 
 
-def logger_setting(app):
+def logger_setting(app: Flask):
     global flask_instance
     flask_instance = app

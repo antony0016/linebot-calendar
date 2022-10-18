@@ -32,21 +32,21 @@ todo_text_replies = [
         'reply': update_todo,
     },
     {
-        'trigger': '建立行事曆',
+        'trigger': 'Create',
         'reply': create_menu,
     },
     {
-        'trigger': '行事曆列表',
+        'trigger': 'List',
         'reply': list_todo,
     },
     {
         'trigger': 'A',
         'reply': list_todo_option,
     },
-    {
-        'trigger': '行事曆',
-        'reply': create_todo
-    },
+    # {
+    #     'trigger': '行事曆',
+    #     'reply': create_todo
+    # },
     {
         'trigger': 'db',
         'reply': db_test
@@ -75,9 +75,10 @@ todo_postback_replies = {
         'create': create_todo_by_text,
     },
     'menu': {
-        'create': create_menu,
+        'read': create_menu,
+        # 'create': create_menu,
     },
-    'a':{
-        'show': test_func,
-    }
+    # 'a': {
+    #     'show': test_func,
+    # }
 }

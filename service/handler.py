@@ -1,7 +1,8 @@
 import json
 
 # response define
-from public.response import PostbackRequest, normal_messages
+from public.response import PostbackRequest, default_messages
+from public.instance import line_bot_api
 
 # reply processor mapper
 from service.sample_reply.triggers import sample_replies
@@ -69,13 +70,9 @@ def postback_message_handler(event):
 
 def followed_event_handler(event):
     line_id = event.source.user_id
-    # session = create_session()
-    # user = User.create_or_get(session, line_id)
-    # reply = TextMessage(text='您的line id為{}，歡迎使用本服務'.format(user.line_id))
-    # if user.id is None:
-    #     reply = TextMessage(text='設定帳號失敗，請嘗試重新加入本帳號!')
-    # session.close()
-    columns = normal_messages['add_event_columns']['single'] + normal_messages['add_event_columns']['group']
+    session = create_session()
+    User.create_or_get(session, line_id)
+    columns = default_messages['add_event_columns']['single'] + default_messages['add_event_columns']['group']
     reply = TemplateSendMessage(
         alt_text='感謝加入本帳號好友！',
         template=CarouselTemplate(
@@ -85,6 +82,10 @@ def followed_event_handler(event):
     return reply
 
 
-# todo: 新增好友時指令提示
 def joined_event_handler(event):
+    if event.source.type == 'group':
+        group_id = event.source.group_id
+        # push_message = ''
+        # user_statistic = ''
+        # line_bot_api.push_message(group_id, TextMessage(text=user_statistic))
     return create_menu(event)

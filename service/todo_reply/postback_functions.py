@@ -24,13 +24,14 @@ from linebot.models import (
 
 from model.todo import Event, EventSetting, EventType
 # postback request
-from public.response import PostbackRequest, get_event_settings
+from public.response import PostbackRequest, get_event_settings_response
 
 
 def create_todo_by_text(event):
     data = PostbackRequest(raw_data=event.postback.data).data
+    is_group = event.source.type == 'group'
     session = create_session()
-    event = Event.create_event(session, data['type_id'], data['line_id'])
+    event = Event.create_event(session, data['type_id'], data['line_id'], is_group=is_group)
     if event.id is None:
         return TextSendMessage(text='建立失敗，請重新嘗試建立行事曆')
     EventSetting.update_event_setting(session, event.id, title=data['title']
@@ -90,10 +91,13 @@ def create_event_by_type(event):
 
 def list_todo_by_type_id(event):
     line_id = event.source.user_id
+    is_group = event.source.type == 'group'
     data = PostbackRequest(raw_data=event.postback.data).data
     session = create_session()
-    event_settings = EventSetting.all_event_setting(session, line_id, data['type_id'])
-    columns = get_event_settings(event_settings)
+    event_settings = EventSetting.all_event_setting(
+        session, line_id, data['type_id'], is_group=is_group
+    )
+    columns = get_event_settings_response(event_settings)
     if len(columns) == 0:
         return create_menu(event)
     return TemplateSendMessage(

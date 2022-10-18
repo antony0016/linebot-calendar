@@ -6,7 +6,7 @@ from model.user import User
 from model.todo import EventType, Event, EventSetting
 
 # request
-from public.response import PostbackRequest, normal_messages, get_event_settings
+from public.response import PostbackRequest, default_messages, get_event_settings_response
 
 from linebot.models import (
     # message
@@ -39,9 +39,9 @@ from linebot.models import (
 # use text to crud event
 
 def create_menu(event):
-    columns = normal_messages['add_event_columns']['group']
+    columns = default_messages['add_event_columns']['group']
     if event.source.type != 'group':
-        columns += normal_messages['add_event_columns']['single']
+        columns += default_messages['add_event_columns']['single']
     reply = TemplateSendMessage(
         alt_text='感謝把我加進群組！',
         template=CarouselTemplate(
@@ -54,11 +54,12 @@ def create_menu(event):
 def confirm_todo_by_text(event):
     message: str = event.message.text
     line_id: str = event.source.user_id
+    # $title$description$time
     args = message.split('$')
     args.pop(0)
     session = create_session()
     event_type = EventType.get_type_by_name(session, args[0])
-    if event_type is None:
+    if event_type is None or len(args) < 4:
         session.close()
         return TextSendMessage(text='指令錯誤, 請重新參考正確指令')
     new_data = PostbackRequest(method='create', model='event_text')
@@ -188,31 +189,10 @@ def list_todo(event):
     # get events and event settings
     session = create_session()
     line_id = event.source.user_id
-    event_settings = EventSetting.all_event_setting(session, line_id)
-    columns = []
-    new_data = PostbackRequest(model='event', method='update')
-    delete_data = PostbackRequest(model='event', method='delete')
-    columns = get_event_settings(event_settings)
-    # for event_setting in event_settings[:10]:
-    #     event_date = event_setting.start_time.isoformat().split('T')[0]
-    #     event_time = event_setting.start_time.isoformat().split('T')[1]
-    #     columns.append(CarouselColumn(
-    #         title=str(event_setting.title),
-    #         text='敘述：{}\n日期：{}\n時間：{}'
-    #         .format(str(event_setting.description), event_date, event_time),
-    #         actions=[
-    #             PostbackTemplateAction(
-    #                 label="細節設定",
-    #                 data=new_data.dumps(data={'event_id': event_setting.event_id}),
-    #             ),
-    #             PostbackTemplateAction(
-    #                 label="刪除",
-    #                 data=delete_data.dumps(data={"event_id": event_setting.event_id}),
-    #             ),
-    #         ]
-    #     ))
+    is_group = event.source.type == 'group'
+    event_settings = EventSetting.all_event_setting(session, line_id, is_group=is_group)
+    columns = get_event_settings_response(event_settings)
     session.close()
-    columns.reverse()
     if len(columns) > 0:
         return TemplateSendMessage(
             alt_text='行事曆列表',
@@ -224,6 +204,7 @@ def list_todo(event):
 
 
 def db_test(event):
+    print(event)
     session = create_session()
     users = session.query(User).all()
     return TextSendMessage(text="目前用戶有{}個用戶".format(str(len(users))))
