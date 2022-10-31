@@ -21,6 +21,12 @@ class EventType(Base):
 
     events = relationship('Event', back_populates='event_type')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+        }
+
     @staticmethod
     def create_default_event_types():
         session = create_session()
@@ -64,6 +70,23 @@ class Event(Base):
     type_id = Column(ForeignKey('event_type.id'), nullable=False)
     event_type = relationship('EventType', back_populates='events')
 
+    def to_dict(self):
+        session = create_session()
+        setting = self.setting.to_dict()
+        members = [member.to_dict() for member in EventMember.all_member_by_event(session, self.id)]
+        session.close()
+        return {
+            'id': self.id,
+            'type_id': self.type_id,
+            'type_name': self.event_type.name,
+            'title': setting['title'],
+            'description': setting['description'],
+            'start_time': setting['start_time'],
+            'group_id': setting['group_id'],
+            'is_group': setting['is_group'],
+            'members': members,
+        }
+
     @staticmethod
     def all_event(session: Session, line_id):
         user = User.create_or_get(session, line_id)
@@ -71,13 +94,17 @@ class Event(Base):
         return events
 
     @staticmethod
-    def create_event(session: Session, type_id, line_id, is_group=False):
+    def create_event(session: Session, type_id, line_id, is_group=False, group_id=None):
         event_type = session.query(EventType).filter(EventType.id == type_id).first()
         user = User.create_or_get(session, line_id)
         new_event = Event(create_uid=user.id, type_id=event_type.id)
         session.add(new_event)
         session.commit()
-        EventSetting.create_event_setting(session, new_event.id, is_group=is_group)
+
+        # create data relate with event.
+        EventSetting.create_event_setting(session, new_event.id,
+                                          is_group=is_group, group_id=group_id)
+        EventMember.create_or_get(session, new_event.id, line_id)
         session.refresh(new_event)
         return new_event
 
@@ -104,9 +131,23 @@ class EventSetting(Base):
     event = relationship('Event', back_populates='setting')
 
     is_group = Column(Boolean, default=False)
+    group_id = Column(String, nullable=True)
     title = Column(String, default='未設定標題')
     description = Column(String, default='未設定敘述')
     start_time = Column(DateTime)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'create_time': self.create_time,
+            'edit_time': self.edit_time,
+            'event_id': self.event_id,
+            'is_group': self.is_group,
+            'group_id': self.group_id,
+            'title': self.title,
+            'description': self.description,
+            'start_time': self.start_time,
+        }
 
     @staticmethod
     def all_event_setting(session: Session, line_id, type_id=-1, is_group=False):
@@ -131,8 +172,8 @@ class EventSetting(Base):
         return event_settings
 
     @staticmethod
-    def create_event_setting(session: Session, event_id, is_group=False):
-        new_event_setting = EventSetting(event_id=event_id, is_group=is_group)
+    def create_event_setting(session: Session, event_id, is_group=False, group_id=None):
+        new_event_setting = EventSetting(event_id=event_id, is_group=is_group, group_id=group_id)
         session.add(new_event_setting)
         session.commit()
         return new_event_setting
@@ -176,25 +217,48 @@ class EventMember(Base):
     event_id = Column(ForeignKey('event.id'), nullable=False)
     event = relationship('Event', back_populates='members')
 
-    member_id = Column(ForeignKey('user.id'), nullable=False)
+    user_id = Column(ForeignKey('user.id'), nullable=False)
+    user = relationship('User', back_populates='member')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'event_id': self.event_id,
+            'user_id': self.user_id,
+            'line_id': self.user.line_id,
+        }
+
+    @staticmethod
+    def all_member_by_event(session: Session, event_id):
+        event_members = session.query(EventMember) \
+            .filter(EventMember.event_id == event_id).all()
+        return event_members
 
     @staticmethod
     def create_or_get(session: Session, event_id, line_id):
         user = User.create_or_get(session, line_id)
-        session = create_session()
         event_member = session.query(EventMember) \
-            .filter(EventMember.member_id == user.id and EventMember.event_id == event_id).first()
+            .filter(EventMember.user_id == user.id,
+                    EventMember.event_id == event_id).first()
         if event_member is None:
-            event_member = EventMember(member_id=user.id, event_id=event_id)
+            event_member = EventMember(user_id=user.id, event_id=event_id)
             session.add(event_member)
             session.commit()
         return event_member
 
     @staticmethod
-    def delete_member(session: Session, event_id, line_id) -> bool:
-        user = User.create_or_get(session, line_id)
+    def delete_member(session: Session, member_id) -> bool:
         delete_count = session.query(EventMember).filter(
-            EventMember.member_id == user.id and EventMember.event_id == event_id
+            EventMember.id == member_id
+        ).delete()
+        session.commit()
+        return delete_count > 0
+
+    @staticmethod
+    def delete_member_by_event_id_and_line_id(session: Session, event_id, line_id) -> bool:
+        delete_count = session.query(EventMember).filter(
+            EventMember.event_id == event_id,
+            EventMember.user_id == User.create_or_get(session, line_id).id
         ).delete()
         session.commit()
         return delete_count > 0

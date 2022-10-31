@@ -3,7 +3,7 @@ from service.todo_reply.text_functions import (
     confirm_todo_by_text,
     create_todo,
     update_todo,
-    list_todo,
+    list_all_todo,
     list_todo_option,
     db_test,
 )
@@ -16,6 +16,7 @@ from service.todo_reply.postback_functions import (
     update_event_by_event_id,
     list_todo_by_type_id,
     delete_event,
+    list_member,
     member_join,
     member_leave,
 )
@@ -37,7 +38,7 @@ todo_text_replies = [
     },
     {
         'trigger': 'List',
-        'reply': list_todo,
+        'reply': list_all_todo,
     },
     {
         'trigger': 'A',
@@ -68,6 +69,7 @@ todo_postback_replies = {
         'update': update_event_by_event_id,
     },
     'event_member': {
+        'read': list_member,
         'create': member_join,
         'delete': member_leave,
     },

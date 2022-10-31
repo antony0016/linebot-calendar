@@ -15,6 +15,9 @@ from model.todo import Event, EventType, EventMember, EventSetting
 # Line bot reply instance
 from public.instance import line_bot_api, handler, logger_setting
 
+# api view class
+from service.api.event import EventView, GroupView
+
 # event handler
 from service.handler import (
     text_message_handler,
@@ -72,6 +75,16 @@ def group_joined(event):
     reply = joined_event_handler(event)
     line_bot_api.reply_message(event.reply_token, reply)
 
+
+event_view = EventView.as_view('event_api')
+group_view = GroupView.as_view('group_api')
+# app.add_url_rule('/events/', view_func=event_view, methods=['GET'])
+app.add_url_rule('/event/<string:line_id>/<int:event_id>',
+                 view_func=event_view, methods=['GET', 'PUT', 'DELETE'])
+app.add_url_rule('/group/<string:line_id>/<string:group_id>',
+                 view_func=group_view, methods=['GET'])
+app.add_url_rule('/events/<string:line_id>',
+                 view_func=event_view, methods=['GET'])
 
 if __name__ == "__main__":
     create_db()

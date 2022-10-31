@@ -17,6 +17,7 @@ class User(Base):
     edit_time = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
 
     events = relationship('Event', back_populates='create_user')
+    member = relationship('EventMember', back_populates='user')
 
     @staticmethod
     def create_or_get(session: Session, line_id):

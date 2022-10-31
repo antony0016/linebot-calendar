@@ -22,7 +22,7 @@ from linebot.models import (
     QuickReplyButton,
 )
 
-from model.todo import Event, EventSetting, EventType
+from model.todo import Event, EventSetting, EventType, EventMember
 # postback request
 from public.response import PostbackRequest, get_event_settings_response
 
@@ -30,8 +30,10 @@ from public.response import PostbackRequest, get_event_settings_response
 def create_todo_by_text(event):
     data = PostbackRequest(raw_data=event.postback.data).data
     is_group = event.source.type == 'group'
+    group_id = event.source.group_id if is_group else None
     session = create_session()
-    event = Event.create_event(session, data['type_id'], data['line_id'], is_group=is_group)
+    event = Event.create_event(session, data['type_id'], data['line_id'],
+                               is_group=is_group, group_id=group_id)
     if event.id is None:
         return TextSendMessage(text='建立失敗，請重新嘗試建立行事曆')
     EventSetting.update_event_setting(session, event.id, title=data['title']
@@ -63,7 +65,8 @@ def create_todo_by_text(event):
 def create_event_by_type(event):
     data = PostbackRequest(raw_data=event.postback.data).data
     session = create_session()
-    event = Event.create_event(session, data['type_id'], data['line_id'])
+    event = Event.create_event(session, data['type_id'], data['line_id'],
+                               is_group=data['is_group'], group_id=data['group_id'])
     if event.id is None:
         return TextSendMessage(text='建立行事曆失敗，請重新嘗試建立')
     event_type = EventType.get_type_by_id(session, data['type_id'])
@@ -97,7 +100,8 @@ def list_todo_by_type_id(event):
     event_settings = EventSetting.all_event_setting(
         session, line_id, data['type_id'], is_group=is_group
     )
-    columns = get_event_settings_response(event_settings)
+    columns = get_event_settings_response(event_settings, is_group=is_group)
+
     if len(columns) == 0:
         return create_menu(event)
     return TemplateSendMessage(
@@ -116,33 +120,40 @@ def simple_reply(event):
 def event_setting_detail(event):
     data = PostbackRequest(raw_data=event.postback.data).data
     session = create_session()
-    event = Event.get_event(session, data['event_id'])
-    if event is None:
+    the_event = Event.get_event(session, data['event_id'])
+    if the_event is None:
         session.close()
         return TextSendMessage(text='好像沒有這個行事曆喔')
-    event_type = EventType.get_type_by_id(session, event.type_id)
+    event_setting = the_event.setting
     new_data = PostbackRequest(model='event_setting', method='update')
     reply_data = PostbackRequest(model='reply', method='create')
     session.close()
+    event_description = event_setting.description
+    event_date = '未設定'
+    event_time = '未設定'
+    if event_setting.start_time is not None:
+        event_date = event_setting.start_time.isoformat().split('T')[0]
+        event_time = event_setting.start_time.isoformat().split('T')[1]
     return TemplateSendMessage(
-        alt_text=event_type.name + '細節',
+        alt_text=event_setting.title + ' 細節設定',
         template=ButtonsTemplate(
-            title=event_type.name + '細節',
-            text='設定' + event_type.name + '細節',
+            title=event_setting.title + ' 細節設定',
+            text='敘述：{}\n日期：{}\n時間：{}'
+            .format(str(event_description), event_date, event_time),
             actions=[
                 PostbackTemplateAction(
                     label="設定標題",
                     text='*請直接複製機器人的指令，並加上標題文字',
-                    data=reply_data.dumps(data={'text': '{}@event.title='.format(event.id)}),
+                    data=reply_data.dumps(data={'text': '{}@event.title='.format(the_event.id)}),
                 ),
                 PostbackTemplateAction(
                     label="設定敘述",
                     text='*請直接複製機器人的指令，並加上敘述文字',
-                    data=reply_data.dumps(data={'text': '{}@event.description='.format(event.id)}),
+                    data=reply_data.dumps(data={'text': '{}@event.description='.format(the_event.id)}),
                 ),
                 DatetimePickerTemplateAction(
                     label="設定提醒",
-                    data=new_data.dumps(data={"event_id": event.id, "column": "start_time"}),
+                    data=new_data.dumps(data={"event_id": the_event.id, "column": "start_time"}),
                     mode='datetime',
                 ),
             ]
@@ -171,7 +182,8 @@ def update_event_by_event_id(event):
     # if part == 'description':
     #     event_setting = EventSetting.update_event_setting(event_id, description='test')
     if column == 'start_time':
-        start_time = event.postback.params['datetime'] + ':00'
+        raw_start_time = event.postback.params['datetime'] + ':00'
+        start_time = datetime.datetime.fromisoformat(raw_start_time)
         event_setting = EventSetting.update_event_setting(session, event_id, start_time=start_time)
     if event_setting is None:
         reply = TextSendMessage(text='更新失敗')
@@ -179,11 +191,70 @@ def update_event_by_event_id(event):
     return reply
 
 
+def list_member(event):
+    data = PostbackRequest(raw_data=event.postback.data).data
+    columns = []
+    session = create_session()
+    the_event = Event.get_event(session, data['event_id'])
+    if the_event is None:
+        return TextSendMessage(text='找不到此活動/代辦事項/提醒')
+    event_members = the_event.members
+    event_setting = the_event.setting
+    join_data = PostbackRequest(model='event_member', method='create')
+    leave_data = PostbackRequest(model='event_member', method='delete')
+    new_data = PostbackRequest(model='event', method='update')
+
+    for member in event_members:
+        columns.append(CarouselColumn(
+            title=event_setting.title,
+            text=member.user.name,
+            actions=[
+                PostbackTemplateAction(
+                    label='刪除',
+                    data=leave_data.dumps(
+                        {'member_id': member.id}
+                    ),
+                )
+            ],
+        ))
+    columns.append(CarouselColumn(
+        title=event_setting.title,
+        text='加入此活動',
+        actions=[
+            PostbackTemplateAction(
+                label='加入',
+                data=join_data.dumps(
+                    {'event_id': the_event.id}
+                ),
+            )
+        ],
+    ))
+    session.close()
+    if len(columns) > 0:
+        return TemplateSendMessage(
+            template=CarouselTemplate(columns=columns)
+            , alt_text='參與成員')
+    return TextSendMessage(text='123')
+
+
 # todo: member_join
 def member_join(event):
-    return TextSendMessage(text='')
+    data = PostbackRequest(raw_data=event.postback.data).data
+    session = create_session()
+    the_event = Event.get_event(session, data['event_id'])
+    member = EventMember.create_or_get(session, the_event.id, event.source.user_id)
+    session.close()
+    if member is None:
+        return TextSendMessage(text='加入失敗，請再重新嘗試')
+    return TextSendMessage(text='加入成功')
 
 
 # todo: member_leave
 def member_leave(event):
-    return TextSendMessage(text='')
+    data = PostbackRequest(raw_data=event.postback.data).data
+    session = create_session()
+    de_count = EventMember.delete_member(session, data['member_id'])
+    session.close()
+    if de_count > 0:
+        return TextSendMessage(text='刪除成功')
+    return TextSendMessage(text='刪除失敗，請再重新嘗試')

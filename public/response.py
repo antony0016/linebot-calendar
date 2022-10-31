@@ -26,11 +26,13 @@ class PostbackRequest:
         self.data = data['data']
 
 
-def get_event_settings_response(event_settings: List[EventSetting]):
+def get_event_settings_response(event_settings: List[EventSetting], is_group=False):
     columns = []
     new_data = PostbackRequest(model='event', method='update')
     delete_data = PostbackRequest(model='event', method='delete')
+    new_member_data = PostbackRequest(model='event_member', method='read')
     for event_setting in event_settings[:10]:
+        actions = []
         event_date = '未設定'
         event_time = '未設定'
         event_description = '未設定'
@@ -39,11 +41,18 @@ def get_event_settings_response(event_settings: List[EventSetting]):
             event_time = event_setting.start_time.isoformat().split('T')[1]
         if event_setting.description is not None or event_setting.description != '':
             event_description = event_setting.description
+        if is_group:
+            actions.append(
+                PostbackTemplateAction(
+                    label="參與成員",
+                    data=new_member_data.dumps(data={'event_id': event_setting.event_id})
+                )
+            )
         columns.append(CarouselColumn(
             title=str(event_setting.title),
             text='敘述：{}\n日期：{}\n時間：{}'
             .format(str(event_description), event_date, event_time),
-            actions=[
+            actions=actions + [
                 PostbackTemplateAction(
                     label="細節設定",
                     data=new_data.dumps(data={'event_id': event_setting.event_id}),

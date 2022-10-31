@@ -54,6 +54,8 @@ def create_menu(event):
 def confirm_todo_by_text(event):
     message: str = event.message.text
     line_id: str = event.source.user_id
+    is_group: bool = event.source.type == 'group'
+    group_id: str = event.source.group_id if is_group else None
     # $title$description$time
     args = message.split('$')
     args.pop(0)
@@ -88,7 +90,10 @@ def confirm_todo_by_text(event):
                         'line_id': line_id,
                         'title': args[1],
                         'note': args[2],
-                        'time': args[3], })
+                        'time': args[3],
+                        'is_group': is_group,
+                        'group_id': group_id,
+                    })
                 ),
                 PostbackTemplateAction(
                     label='否',
@@ -185,13 +190,14 @@ def list_todo_option(event):
     )
 
 
-def list_todo(event):
+def list_all_todo(event):
     # get events and event settings
     session = create_session()
     line_id = event.source.user_id
     is_group = event.source.type == 'group'
-    event_settings = EventSetting.all_event_setting(session, line_id, is_group=is_group)
-    columns = get_event_settings_response(event_settings)
+    event_settings = EventSetting.all_event_setting(
+        session, line_id, is_group=is_group)
+    columns = get_event_settings_response(event_settings, is_group=is_group)
     session.close()
     if len(columns) > 0:
         return TemplateSendMessage(
