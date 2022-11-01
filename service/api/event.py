@@ -113,4 +113,6 @@ def delete_event(line_id, event_id=None):
     delete_count = Event.delete_event(session, event_id)
     session.commit()
     session.close()
-    return jsonify({'success': delete_count})
+    if delete_count == 0:
+        return jsonify({'error': 'event not found'})
+    return jsonify({'message': 'delete success'})
