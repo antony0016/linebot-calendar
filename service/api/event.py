@@ -42,7 +42,7 @@ def update_event_view(line_id, event_id=None):
 
 @flask_instance.route('/event/delete/<line_id>/<event_id>', methods=['POST'])
 def delete_event_view(line_id, event_id=None):
-    return update_event(line_id, event_id, request.form.to_dict())
+    return delete_event(line_id, event_id)
 
 
 def get_event(line_id, event_id=None):
