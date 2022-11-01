@@ -2,3 +2,6 @@
 .env.dev*
 .env.prod*
 *.db
+
+__pycache__
+.idea
