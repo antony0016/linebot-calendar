@@ -21,7 +21,7 @@ line_bot_api = LineBotApi(os.getenv('CHANNEL_ACCESS_TOKEN'))
 handler = WebhookHandler(os.getenv('CHANNEL_SECRET'))
 
 # flask instance
-flask_instance: Flask = None
+flask_instance: Flask = Flask(__name__)
 
 
 def logger_setting(app: Flask):

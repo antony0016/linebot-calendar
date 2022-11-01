@@ -13,10 +13,10 @@ from model.user import User
 from model.todo import Event, EventType, EventMember, EventSetting
 
 # Line bot reply instance
-from public.instance import line_bot_api, handler, logger_setting
+from public.instance import line_bot_api, handler, logger_setting, flask_instance
 
-# api view class
-from service.api.event import EventView, GroupView
+# pre import api functions
+from service.api import event
 
 # event handler
 from service.handler import (
@@ -27,10 +27,11 @@ from service.handler import (
 )
 
 # flask instance
-app = Flask(__name__)
+app = flask_instance
 static_tmp_path = os.path.join(os.path.dirname(__file__), 'static', 'tmp')
 
-logger_setting(app)
+
+# logger_setting(app)
 
 
 # 監聽所有來自 /callback 的 Post Request
@@ -81,15 +82,15 @@ def group_joined(event):
     line_bot_api.reply_message(event.reply_token, reply)
 
 
-event_view = EventView.as_view('event_api')
-group_view = GroupView.as_view('group_api')
-# app.add_url_rule('/events/', view_func=event_view, methods=['GET'])
-app.add_url_rule('/event/<string:line_id>/<int:event_id>',
-                 view_func=event_view, methods=['GET', 'PUT', 'DELETE'])
-app.add_url_rule('/group/<string:line_id>/<string:group_id>',
-                 view_func=group_view, methods=['GET'])
-app.add_url_rule('/events/<string:line_id>',
-                 view_func=event_view, methods=['GET'])
+# event_view = EventView.as_view('event_api')
+# group_view = GroupView.as_view('group_api')
+# # app.add_url_rule('/events/', view_func=event_view, methods=['GET'])
+# app.add_url_rule('/event/<string:line_id>/<int:event_id>',
+#                  view_func=event_view, methods=['GET', 'PUT', 'DELETE'])
+# app.add_url_rule('/group/<string:line_id>/<string:group_id>',
+#                  view_func=group_view, methods=['GET'])
+# app.add_url_rule('/events/<string:line_id>',
+#                  view_func=event_view, methods=['GET'])
 
 if __name__ == "__main__":
     create_db()
