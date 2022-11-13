@@ -62,7 +62,7 @@ def get_event(line_id, event_id=None, group_id=None):
     for event in temp_events:
         if event_id is not None and int(event_id) != event.id:
             continue
-        if group_id is not None and group_id != event.group_id:
+        if group_id is not None and group_id != event.setting.group_id:
             continue
         events.append(event.to_dict())
     session.close()
