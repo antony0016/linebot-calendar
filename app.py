@@ -2,21 +2,20 @@
 import os
 
 # Open source lib imports
-from flask import Flask, request, abort
+from flask import request, abort
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import *
 
 # Custom library
 # Import models
 from model.db import create_db
-from model.user import User
-from model.todo import Event, EventType, EventMember, EventSetting
+from model.todo import EventType
 
 # Line bot reply instance
-from public.instance import line_bot_api, handler, logger_setting, flask_instance
+from public.instance import line_bot_api, handler, flask_instance
 
 # pre import api functions
-from service.api import event
+import service.api
 
 # event handler
 from service.handler import (

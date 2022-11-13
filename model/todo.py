@@ -109,8 +109,17 @@ class Event(Base):
         return new_event
 
     @staticmethod
-    def get_event(session: Session, event_id):
+    def get_event(session: Session, event_id, group_id=None):
         event = session.query(Event).filter(Event.id == event_id).first()
+        if group_id is not None:
+            event = session.query(Event).filter(Event.id == event_id, Event.setting.group_id == group_id).first()
+        return event
+
+    @staticmethod
+    def update_event_type(session: Session, event_id, type_id):
+        event = session.query(Event).filter(Event.id == event_id).first()
+        event.type_id = type_id
+        session.commit()
         return event
 
     @staticmethod
