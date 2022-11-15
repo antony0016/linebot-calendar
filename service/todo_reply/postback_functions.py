@@ -22,9 +22,10 @@ from linebot.models import (
     QuickReplyButton,
 )
 
-from model.todo import Event, EventSetting, EventType, EventMember
+from model.todo import Event, EventSetting, EventType, EventMember, ShareCode, ShareRecord
 # postback request
-from public.response import PostbackRequest, get_event_settings_response
+from model.response import PostbackRequest
+from public.response import get_event_settings_response
 
 
 def create_todo_by_text(event):
@@ -123,7 +124,7 @@ def event_setting_detail(event):
     the_event = Event.get_event(session, data['event_id'])
     if the_event is None:
         session.close()
-        return TextSendMessage(text='好像沒有這個行事曆喔')
+        return TextSendMessage(text='找不到對應行事曆，請重新查詢')
     event_setting = the_event.setting
     new_data = PostbackRequest(model='event_setting', method='update')
     reply_data = PostbackRequest(model='reply', method='create')
@@ -131,32 +132,49 @@ def event_setting_detail(event):
     event_description = event_setting.description
     event_date = '未設定'
     event_time = '未設定'
+    # show event date and time
     if event_setting.start_time is not None:
         event_date = event_setting.start_time.isoformat().split('T')[0]
         event_time = event_setting.start_time.isoformat().split('T')[1]
-    return TemplateSendMessage(
-        alt_text=event_setting.title + ' 細節設定',
-        template=ButtonsTemplate(
-            title=event_setting.title + ' 細節設定',
-            text='敘述：{}\n日期：{}\n時間：{}'
-            .format(str(event_description), event_date, event_time),
+    columns = [
+        CarouselColumn(
+            title=event_setting.title + ' 標題',
+            text=event_setting.title,
             actions=[
                 PostbackTemplateAction(
-                    label="設定標題",
+                    label='重新設定標題',
                     text='*請直接複製機器人的指令，並加上標題文字',
                     data=reply_data.dumps(data={'text': '{}@event.title='.format(the_event.id)}),
-                ),
+                )
+            ]
+        ),
+        CarouselColumn(
+            title=event_setting.title + ' 備註',
+            text=event_description,
+            actions=[
                 PostbackTemplateAction(
-                    label="設定敘述",
-                    text='*請直接複製機器人的指令，並加上敘述文字',
+                    label='重新設定備註',
+                    text='*請直接複製機器人的指令，並加上備註文字',
                     data=reply_data.dumps(data={'text': '{}@event.description='.format(the_event.id)}),
-                ),
+                )
+            ]
+        ),
+        CarouselColumn(
+            title=event_setting.title + ' 提醒時間',
+            text=event_date + ' ' + event_time,
+            actions=[
                 DatetimePickerTemplateAction(
-                    label="設定提醒",
+                    label='重新設定提醒時間',
                     data=new_data.dumps(data={"event_id": the_event.id, "column": "start_time"}),
                     mode='datetime',
-                ),
+                )
             ]
+        ),
+    ]
+    return TemplateSendMessage(
+        alt_text='細節設定',
+        template=CarouselTemplate(
+            columns=columns,
         )
     )
 
@@ -234,7 +252,26 @@ def list_member(event):
         return TemplateSendMessage(
             template=CarouselTemplate(columns=columns)
             , alt_text='參與成員')
-    return TextSendMessage(text='123')
+    return TextSendMessage(text='好像哪裡怪怪的')
+
+
+def new_share_code(event):
+    data = PostbackRequest(raw_data=event.postback.data).data
+    line_id = event.source.user_id
+    response = TextSendMessage(text='發生錯誤')
+    session = create_session()
+    the_event = Event.get_event(session, data['event_id'])
+    events = []
+    if the_event is None and data['event_id'] != -1:
+        return TextSendMessage(text='找不到此活動/代辦事項/提醒')
+    else:
+        if the_event is not None:
+            events.append(the_event.id)
+        events += [share_event.id for share_event in Event.all_event(session, line_id)]
+    share_code = ShareCode.create_share_code(session, events, line_id)
+    response = TextSendMessage(text='@code={}'.format(share_code.code))
+    session.close()
+    return response
 
 
 # todo: member_join

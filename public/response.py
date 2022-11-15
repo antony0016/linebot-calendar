@@ -2,45 +2,16 @@ import json
 from typing import List
 
 from linebot.models import CarouselColumn, MessageTemplateAction, PostbackTemplateAction
+
+from model.response import PostbackRequest
 from model.todo import EventSetting
-
-
-class PostbackRequest:
-
-    def __init__(self, model='', method='', data=dict, raw_data: str = ''):
-        self.model = model
-        self.method = method
-        self.data = data
-        if raw_data != '':
-            self.loads(raw_data.replace('+', ' '))
-
-    def dumps(self, data=None) -> str:
-        if data is not None:
-            self.data = data
-        return json.dumps(self.__dict__)
-
-    def loads(self, raw_data: str):
-        data = json.loads(raw_data)
-        self.model = data['model']
-        self.method = data['method']
-        self.data = data['data']
 
 
 def get_event_settings_response(event_settings: List[EventSetting], is_group=False):
     columns = []
-    new_data = PostbackRequest(model='event', method='update')
-    delete_data = PostbackRequest(model='event', method='delete')
     new_member_data = PostbackRequest(model='event_member', method='read')
     for event_setting in event_settings[:10]:
         actions = []
-        event_date = '未設定'
-        event_time = '未設定'
-        event_description = '未設定'
-        if event_setting.start_time is not None:
-            event_date = event_setting.start_time.isoformat().split('T')[0]
-            event_time = event_setting.start_time.isoformat().split('T')[1]
-        if event_setting.description is not None or event_setting.description != '':
-            event_description = event_setting.description
         if is_group:
             actions.append(
                 PostbackTemplateAction(
@@ -48,21 +19,7 @@ def get_event_settings_response(event_settings: List[EventSetting], is_group=Fal
                     data=new_member_data.dumps(data={'event_id': event_setting.event_id})
                 )
             )
-        columns.append(CarouselColumn(
-            title=str(event_setting.title),
-            text='敘述：{}\n日期：{}\n時間：{}'
-            .format(str(event_description), event_date, event_time),
-            actions=actions + [
-                PostbackTemplateAction(
-                    label="細節設定",
-                    data=new_data.dumps(data={'event_id': event_setting.event_id}),
-                ),
-                PostbackTemplateAction(
-                    label="刪除",
-                    data=delete_data.dumps(data={"event_id": event_setting.event_id}),
-                ),
-            ]
-        ))
+        columns.append(event_setting.to_line_template(is_column=True, custom_actions=actions))
     return columns
 
 

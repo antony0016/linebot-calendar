@@ -3,10 +3,11 @@ import datetime
 
 from model.db import create_session
 from model.user import User
-from model.todo import EventType, Event, EventSetting
+from model.todo import EventType, Event, EventSetting, ShareCode, ShareRecord
 
 # request
-from public.response import PostbackRequest, default_messages, get_event_settings_response
+from model.response import PostbackRequest
+from public.response import default_messages, get_event_settings_response
 
 from linebot.models import (
     # message
@@ -75,14 +76,6 @@ def confirm_todo_by_text(event):
         template=ConfirmTemplate(
             text=confirm_text,
             actions=[
-                # MessageTemplateAction(
-                #     text='a',
-                #     label='y',
-                # ),
-                # MessageTemplateAction(
-                #     text='b',
-                #     label='n',
-                # ),
                 PostbackTemplateAction(
                     label='是',
                     data=new_data.dumps(data={
@@ -141,7 +134,6 @@ def update_todo(event):
         return TextSendMessage(text='指令有誤 請重試')
     column, data = event_dict[0], event_dict[1]
     event_setting = None
-
     # update event setting
     session = create_session()
     if column == 'title':
@@ -153,7 +145,10 @@ def update_todo(event):
     if event_setting is None:
         return TextSendMessage(text='更新失敗 請重試')
     else:
-        return TextSendMessage(text='更新成功')
+        return TemplateSendMessage(
+            alt_text=event_setting.title,
+            template=event_setting.to_line_template()
+        )
 
 
 def list_todo_option(event):
@@ -207,6 +202,75 @@ def list_all_todo(event):
             )
         )
     return create_menu(event)
+
+
+def share_event_list(event):
+    # get events and event settings
+    session = create_session()
+    line_id = event.source.user_id
+    is_group = event.source.type == 'group'
+    if is_group:
+        return TextSendMessage(text='群組無法分享行事曆')
+    events = Event.all_event(session, line_id)
+    # share all event for other user
+    columns = [
+        CarouselColumn(
+            title='分享全部',
+            text='分享全部',
+            actions=[
+                PostbackTemplateAction(
+                    label='分享',
+                    data=PostbackRequest(model='share_code', method='create').dumps(data={
+                        'event_id': -1,
+                    })
+                )
+            ]
+        )
+    ]
+    for the_event in events:
+        columns.append(
+            the_event.setting.to_line_template(custom_actions=[
+                PostbackTemplateAction(
+                    label='分享',
+                    data=PostbackRequest(model='share_code', method='create').dumps(data={
+                        'event_id': the_event.id,
+                    })
+                )
+            ], convert_action=True, is_column=True)
+        )
+    session.close()
+    if len(columns) > 0:
+        return TemplateSendMessage(
+            alt_text='行事曆列表',
+            template=CarouselTemplate(
+                columns=columns
+            )
+        )
+    return create_menu(event)
+
+
+def show_code_events(event):
+    code = event.message.text.replace('@code=', '')
+    session = create_session()
+    share_code = ShareCode.get_share_code(session, code)
+    if share_code is None:
+        return TextSendMessage(text='分享碼不存在')
+    columns = []
+    for the_event in share_code.events:
+        columns.append(
+            the_event.setting.to_line_template(custom_actions=[
+                MessageTemplateAction(
+                    label='來源',
+                    text='分享人：{}\n分享碼：{}'.format(share_code.share_user.name, share_code.code)
+                )
+            ], convert_action=True, is_column=True)
+        )
+    return TemplateSendMessage(
+        alt_text='行事曆列表',
+        template=CarouselTemplate(
+            columns=columns
+        )
+    )
 
 
 def db_test(event):

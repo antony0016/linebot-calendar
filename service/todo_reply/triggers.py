@@ -6,6 +6,8 @@ from service.todo_reply.text_functions import (
     list_all_todo,
     list_todo_option,
     db_test,
+    share_event_list,
+    show_code_events,
 )
 
 from service.todo_reply.postback_functions import (
@@ -19,6 +21,7 @@ from service.todo_reply.postback_functions import (
     list_member,
     member_join,
     member_leave,
+    new_share_code,
 )
 
 # from
@@ -44,13 +47,17 @@ todo_text_replies = [
         'trigger': 'A',
         'reply': list_todo_option,
     },
-    # {
-    #     'trigger': '行事曆',
-    #     'reply': create_todo
-    # },
     {
         'trigger': 'db',
         'reply': db_test
+    },
+    {
+        'trigger': 'my-share-code',
+        'reply': share_event_list,
+    },
+    {
+        'trigger': '@code',
+        'reply': show_code_events,
     },
 ]
 
@@ -80,6 +87,9 @@ todo_postback_replies = {
         'read': create_menu,
         # 'create': create_menu,
     },
+    'share_code': {
+        'create': new_share_code,
+    }
     # 'a': {
     #     'show': test_func,
     # }

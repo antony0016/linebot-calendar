@@ -1,7 +1,8 @@
 import json
 
 # response define
-from public.response import PostbackRequest, default_messages
+from model.response import PostbackRequest
+from public.response import default_messages
 from public.instance import line_bot_api
 
 # reply processor mapper

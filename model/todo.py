@@ -1,3 +1,8 @@
+from linebot.models import (
+    TemplateSendMessage, ButtonsTemplate, CarouselColumn, CarouselTemplate,
+    PostbackTemplateAction
+)
+
 from model.db import create_session
 from model.user import User
 
@@ -10,6 +15,9 @@ from sqlalchemy import Integer, DateTime, String, ForeignKey, Boolean
 # from model.db import MyBase
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.session import Session
+
+from model.response import PostbackRequest
+import secrets
 
 
 class EventType(Base):
@@ -69,6 +77,9 @@ class Event(Base):
 
     type_id = Column(ForeignKey('event_type.id'), nullable=False)
     event_type = relationship('EventType', back_populates='events')
+
+    share_code_id = Column(ForeignKey('share_code.id'), nullable=True)
+    share_code = relationship('ShareCode', back_populates='events')
 
     def to_dict(self):
         session = create_session()
@@ -157,6 +168,48 @@ class EventSetting(Base):
             'description': self.description,
             'start_time': self.start_time,
         }
+
+    def to_string(self, with_column=True, with_new_line=True):
+        sep = '\n' if with_new_line else ' '
+        event_date = '未設定'
+        event_time = '未設定'
+        if self.start_time is not None:
+            event_date = self.start_time.strftime('%Y-%m-%d')
+            event_time = self.start_time.strftime('%H:%M:%S')
+        return f'{"標題：" if with_column else ""}{self.title}{sep}' \
+               f'{"敘述：" if with_column else ""}{self.description}{sep}' \
+               f'{"日期：" if with_column else ""}{event_date}{sep}' \
+               f'{"時間：" if with_column else ""}{event_time}'
+
+    def to_line_template(self, is_column=False, custom_actions=None, convert_action=False):
+        update_data = PostbackRequest(model='event', method='update')
+        delete_data = PostbackRequest(model='event', method='delete')
+        actions = [
+            PostbackTemplateAction(
+                label='細節設定',
+                data=update_data.dumps(data={'event_id': self.event_id})
+            ),
+            PostbackTemplateAction(
+                label="刪除",
+                data=delete_data.dumps(data={"event_id": self.event_id}),
+            ),
+        ]
+        if custom_actions is not None:
+            actions += custom_actions
+        if convert_action and custom_actions is not None:
+            actions = custom_actions
+        template = ButtonsTemplate(
+            title=self.title,
+            text=self.to_string(),
+            actions=actions
+        )
+        if is_column:
+            template = CarouselColumn(
+                title=self.title,
+                text=self.to_string(),
+                actions=actions
+            )
+        return template
 
     @staticmethod
     def all_event_setting(session: Session, line_id, type_id=-1, is_group=False):
@@ -271,3 +324,71 @@ class EventMember(Base):
         ).delete()
         session.commit()
         return delete_count > 0
+
+
+class ShareCode(Base):
+    __tablename__ = 'share_code'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    create_time = Column(DateTime, server_default=func.now())
+    edit_time = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
+
+    events = relationship('Event', back_populates='share_code')
+
+    user_id = Column(ForeignKey('user.id'), nullable=False)
+    share_user = relationship('User', back_populates='shared_codes')
+
+    code = Column(String(255), nullable=False, unique=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+
+    share_records = relationship('ShareRecord', back_populates='share_code')
+
+    @staticmethod
+    def create_share_code(session: Session, event_ids, line_id):
+        user = User.create_or_get(session, line_id)
+        new_code = secrets.token_hex(16)
+        while ShareCode.get_share_code(session, new_code) is not None:
+            new_code = secrets.token_hex(16)
+        share_code = ShareCode(user_id=user.id, code=new_code)
+        session.add(share_code)
+        session.commit()
+        for event_id in event_ids:
+            event = session.query(Event).filter(Event.id == event_id).first()
+            event.share_code_id = share_code.id
+        session.commit()
+        return share_code
+
+    @staticmethod
+    def get_share_code(session: Session, code):
+        share_code = session.query(ShareCode).filter(ShareCode.code == code).first()
+        return share_code
+
+
+class ShareRecord(Base):
+    __tablename__ = 'share_record'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    create_time = Column(DateTime, server_default=func.now())
+    edit_time = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
+
+    user_id = Column(ForeignKey('user.id'), nullable=False)
+    user = relationship('User', back_populates='share_records')
+
+    share_code_id = Column(ForeignKey('share_code.id'), nullable=False)
+    share_code = relationship('ShareCode', back_populates='share_records')
+
+    @staticmethod
+    def get_record_by_user_id_and_share_code_id(session: Session, user_id, share_code):
+        code = session.query(ShareCode).filter(ShareCode.code == share_code).first()
+        if code is None:
+            return None
+        return session.query(ShareRecord).filter(
+            ShareRecord.user_id == user_id,
+            ShareRecord.share_code_id == code.id
+        ).first()
+
+    @staticmethod
+    def new_record(session: Session, share_code_id, line_id):
+        user = User.create_or_get(session, line_id)
+        share_record = ShareRecord(user_id=user.id, share_code_id=share_code_id)
+        session.add(share_record)
+        session.commit()
+        return share_record
