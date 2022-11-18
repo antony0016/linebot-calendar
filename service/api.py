@@ -37,7 +37,10 @@ class MyResponse:
 def list_event_view(line_id):
     event_id = request.args.get('event_id')
     group_id = request.args.get('group_id')
-    return MyResponse(get_event(line_id, event_id, group_id)).to_json()
+    events = get_event(line_id, event_id, group_id)
+    return MyResponse(
+        data=events
+    ).to_json()
 
 
 @flask_instance.route('/event/create/<line_id>', methods=['POST'])
@@ -53,6 +56,30 @@ def update_event_view(line_id, event_id=None):
 @flask_instance.route('/event/delete/<line_id>/<event_id>', methods=['POST'])
 def delete_event_view(line_id, event_id=None):
     return delete_event(line_id, event_id).to_json()
+
+
+@flask_instance.route('/event/status/<line_id>/<event_id>', methods=['POST'])
+def update_event_status_view(line_id, event_id=None):
+    status = request.args.get('status', False, bool)
+    return change_event_status(line_id, event_id, status).to_json()
+
+
+def change_event_status(line_id, event_id, status):
+    response = MyResponse()
+    if event_id is None:
+        response.error_msg = 'event_id is None'
+        response.status = 400
+        return response
+    session = create_session()
+    event = Event.get_event(session, event_id)
+    if event is None:
+        response.error_msg = 'event not found'
+        response.status = 404
+        return response
+    event.status = status
+    session.commit()
+    session.close()
+    return response
 
 
 def get_event(line_id, event_id=None, group_id=None):

@@ -81,6 +81,8 @@ class Event(Base):
     share_code_id = Column(ForeignKey('share_code.id'), nullable=True)
     share_code = relationship('ShareCode', back_populates='events')
 
+    status = Column(Boolean, default=True)
+
     def to_dict(self):
         session = create_session()
         setting = self.setting.to_dict()
