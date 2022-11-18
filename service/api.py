@@ -42,9 +42,7 @@ def list_event_view(line_id):
     for event in events:
         print(event.get('status'))
         count += 1 if event.get('status') is True else 0
-    res = MyResponse(
-        data=events
-    ).to_json()
+    res = jsonify(data=events, remaining=count)
     res.remaining = count
     print(res)
     return res
