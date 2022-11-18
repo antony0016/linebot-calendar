@@ -38,9 +38,14 @@ def list_event_view(line_id):
     event_id = request.args.get('event_id')
     group_id = request.args.get('group_id')
     events = get_event(line_id, event_id, group_id)
-    return MyResponse(
+    count = 0
+    for event in events:
+        event += 1 if event.status == True else 0
+    res = MyResponse(
         data=events
     ).to_json()
+    res.remaining = count
+    return res
 
 
 @flask_instance.route('/event/create/<line_id>', methods=['POST'])
