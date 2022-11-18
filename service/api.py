@@ -40,11 +40,13 @@ def list_event_view(line_id):
     events = get_event(line_id, event_id, group_id)
     count = 0
     for event in events:
+        print(event.get('status'))
         count += 1 if event.get('status') is True else 0
     res = MyResponse(
         data=events
     ).to_json()
     res.remaining = count
+    print(res)
     return res
 
 
