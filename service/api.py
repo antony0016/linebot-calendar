@@ -64,7 +64,8 @@ def delete_event_view(line_id, event_id=None):
 def update_event_status_view(line_id, event_id=None):
     if event_id is None:
         return jsonify(data={}, status=400, error_msg='event_id is None')
-    status = request.args.get('status', False, bool)
+    status = request.args.get('status', 'false', str).lower() == 'true'
+    print(status)
     return change_event_status(line_id, event_id, status).to_json()
 
 
