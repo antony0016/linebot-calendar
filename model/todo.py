@@ -98,6 +98,7 @@ class Event(Base):
             'group_id': setting['group_id'],
             'is_group': setting['is_group'],
             'members': members,
+            'status': self.status == 1,
         }
 
     @staticmethod

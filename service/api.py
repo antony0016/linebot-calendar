@@ -40,11 +40,8 @@ def list_event_view(line_id):
     events = get_event(line_id, event_id, group_id)
     count = 0
     for event in events:
-        print(event.get('status'))
-        count += 1 if event.get('status') is True else 0
-    res = jsonify(data=events, remaining=count)
-    res.remaining = count
-    print(res)
+        count += 1 if event.get('status') else 0
+    res = jsonify(data=events, remaining=count, status=200, error_msg='')
     return res
 
 
@@ -65,6 +62,8 @@ def delete_event_view(line_id, event_id=None):
 
 @flask_instance.route('/event/status/<line_id>/<event_id>', methods=['POST'])
 def update_event_status_view(line_id, event_id=None):
+    if event_id is None:
+        return jsonify(data={}, status=400, error_msg='event_id is None')
     status = request.args.get('status', False, bool)
     return change_event_status(line_id, event_id, status).to_json()
 

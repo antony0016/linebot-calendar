@@ -26,6 +26,9 @@ flask_instance: Flask = Flask(__name__)
 CORS(flask_instance)
 
 
+# flask_instance
+
+
 def logger_setting(app: Flask):
     global flask_instance
     flask_instance = app
