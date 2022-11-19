@@ -109,7 +109,7 @@ def get_event(line_id, event_id=None, group_id=None):
 def new_event(line_id, data=None):
     session = create_session()
     response = MyResponse()
-    if line_id is None or 'type_id' not in data:
+    if line_id is None or 'type_id' not in data.keys():
         response.error_msg = 'line_id or type_id is None'
         response.status = 400
         return response
