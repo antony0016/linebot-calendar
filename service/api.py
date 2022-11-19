@@ -42,7 +42,7 @@ def list_event_view(line_id):
     data = []
     count = 0
     for event in events:
-        count += 1 if event.get('status') else 0
+        count += 1 if event.get('is_done') else 0
         if type_id is not None and type_id == event.get('type_id'):
             continue
         data.append(event)
