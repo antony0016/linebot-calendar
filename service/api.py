@@ -44,7 +44,8 @@ def list_event_view(line_id):
     for event in events:
         count += 1 if event.get('status') else 0
         if type_id is not None and type_id == event.get('type_id'):
-            data.append(event)
+            continue
+        data.append(event)
     res = jsonify(data=data, remaining=count, status=200, error_msg='')
     return res
 
