@@ -37,11 +37,15 @@ class MyResponse:
 def list_event_view(line_id):
     event_id = request.args.get('event_id')
     group_id = request.args.get('group_id')
+    type_id = request.args.get('type_id')
     events = get_event(line_id, event_id, group_id)
+    data = []
     count = 0
     for event in events:
         count += 1 if event.get('status') else 0
-    res = jsonify(data=events, remaining=count, status=200, error_msg='')
+        if type_id is not None and type_id == event.get('type_id'):
+            data.append(event)
+    res = jsonify(data=data, remaining=count, status=200, error_msg='')
     return res
 
 
