@@ -35,15 +35,13 @@ class MyResponse:
 
 @flask_instance.route('/event/list/<line_id>', methods=['POST'])
 def list_event_view(line_id):
-    event_id = request.args.get('event_id')
+    event_id = request.args.get('event_id', None, int)
     group_id = request.args.get('group_id')
-    type_id = request.args.get('type_id')
-    events = get_event(line_id, event_id, group_id)
+    type_id = request.args.get('type_id', None, int)
+    events = get_event(line_id, event_id, group_id, type_id)
     data = []
     count = 0
     for event in events:
-        if type_id is not None and type_id == event.get('type_id'):
-            continue
         count += 1 if event.get('is_done') else 0
         data.append(event)
     res = jsonify(data=data, remaining=count, status=200, error_msg='')
@@ -92,14 +90,16 @@ def change_event_status(line_id, event_id, status):
     return response
 
 
-def get_event(line_id, event_id=None, group_id=None):
+def get_event(line_id, event_id: int = None, group_id: str = None, type_id: int = None):
     session = create_session()
     events = []
     temp_events = Event.all_event(session, line_id)
     for event in temp_events:
-        if event_id is not None and int(event_id) != event.id:
+        if event_id is not None and event_id != event.id:
             continue
         if group_id is not None and group_id != event.setting.group_id:
+            continue
+        if type_id is not None and type_id != event.type_id:
             continue
         events.append(event.to_dict())
     session.close()
