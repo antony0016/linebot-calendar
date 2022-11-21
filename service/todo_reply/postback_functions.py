@@ -150,7 +150,7 @@ def event_setting_detail(event):
         ),
         CarouselColumn(
             title=event_setting.title + ' 備註',
-            text=event_description,
+            text=event_description + ' ',
             actions=[
                 PostbackTemplateAction(
                     label='重新設定備註',
