@@ -155,8 +155,8 @@ class EventSetting(Base):
 
     is_group = Column(Boolean, default=False)
     group_id = Column(String, nullable=True)
-    title = Column(String, default='未設定標題')
-    description = Column(String, default='未設定敘述')
+    title = Column(String, default='')
+    description = Column(String, default='')
     start_time = Column(DateTime)
 
     def to_dict(self):
