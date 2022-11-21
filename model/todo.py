@@ -182,7 +182,7 @@ class EventSetting(Base):
         return f'{"標題：" if with_column else ""}{self.title}{sep}' \
                f'{"敘述：" if with_column else ""}{self.description}{sep}' \
                f'{"日期：" if with_column else ""}{event_date}{sep}' \
-               f'{"時間：" if with_column else ""}{event_time}'
+               f'{"時間：" if with_column else ""}{event_time}'[0:57]
 
     def to_line_template(self, is_column=False, custom_actions=None, convert_action=False):
         update_data = PostbackRequest(model='event', method='update')
@@ -226,13 +226,13 @@ class EventSetting(Base):
             ).all()
         event_settings = []
         for event in events:
-            es = session.query(EventSetting) \
+            event_setting = session.query(EventSetting) \
                 .filter(EventSetting.event_id == event.id).first()
-            if es is None:
+            if event_setting is None:
                 continue
-            if is_group and es.is_group is False:
+            if is_group and event_setting.is_group is False:
                 continue
-            event_settings.append(es)
+            event_settings.append(event_setting)
         event_settings.reverse()
         return event_settings
 
