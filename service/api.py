@@ -42,7 +42,7 @@ def list_event_view(line_id):
     data = []
     count = 0
     for event in events:
-        count += 1 if event.get('is_done') else 0
+        count += 0 if event.get('is_done') else 1
         data.append(event)
     res = jsonify(data=data, remaining=count, status=200, error_msg='')
     return res
