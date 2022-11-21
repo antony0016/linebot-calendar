@@ -172,24 +172,25 @@ class EventSetting(Base):
             'start_time': self.start_time,
         }
 
-    def to_string(self, with_column=True, with_new_line=True):
+    def to_string(self, with_column=True, with_new_line=True, show_short=False):
         sep = '\n' if with_new_line else ' '
         event_date = '未設定'
         event_time = '未設定'
         if self.start_time is not None:
             event_date = self.start_time.strftime('%Y-%m-%d')
             event_time = self.start_time.strftime('%H:%M:%S')
-        return f'{"標題：" if with_column else ""}{self.title}{sep}' \
-               f'{"敘述：" if with_column else ""}{self.description}{sep}' \
-               f'{"日期：" if with_column else ""}{event_date}{sep}' \
-               f'{"時間：" if with_column else ""}{event_time}'[0:57]
+        result = f'{"標題：" if with_column else ""}{self.title}{sep}' \
+                 f'{"敘述：" if with_column else ""}{self.description}{sep}' \
+                 f'{"日期：" if with_column else ""}{event_date}{sep}' \
+                 f'{"時間：" if with_column else ""}{event_time}'[0:57]
+        return result[0:56] + '...' if show_short else result
 
     def to_line_template(self, is_column=False, custom_actions=None, convert_action=False):
         update_data = PostbackRequest(model='event', method='update')
         delete_data = PostbackRequest(model='event', method='delete')
         actions = [
             PostbackTemplateAction(
-                label='細節設定',
+                label='顯示細節及設定',
                 data=update_data.dumps(data={'event_id': self.event_id})
             ),
             PostbackTemplateAction(
@@ -203,13 +204,13 @@ class EventSetting(Base):
             actions = custom_actions
         template = ButtonsTemplate(
             title=self.title,
-            text=self.to_string(),
+            text=self.to_string(show_short=True),
             actions=actions
         )
         if is_column:
             template = CarouselColumn(
                 title=self.title,
-                text=self.to_string(),
+                text=self.to_string(show_short=True),
                 actions=actions
             )
         return template
