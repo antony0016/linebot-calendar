@@ -65,16 +65,12 @@ def delete_event_view(line_id, event_id=None):
 
 @flask_instance.route('/event/status/<line_id>/<event_id>', methods=['POST'])
 def update_event_status_view(line_id, event_id=None):
-    if event_id is None:
-        return jsonify(data={}, status=400, error_msg='event_id is None')
-    if 'is_done' not in request.form.keys():
-        return jsonify(data={}, status=400, error_msg='is_done is None')
-    is_done = request.args.get('is_done', 'false', str).lower() == 'true'
+    is_done = request.args.get('is_done', 'false', str).lower() != 'false'
     print(is_done)
     return change_event_status(line_id, event_id, is_done).to_json()
 
 
-def change_event_status(line_id, event_id, is_done):
+def change_event_status(line_id, event_id, is_done: bool):
     response = MyResponse()
     if event_id is None:
         response.error_msg = 'event_id is None'
@@ -84,9 +80,10 @@ def change_event_status(line_id, event_id, is_done):
     event = Event.get_event(session, event_id)
     if event is None:
         response.error_msg = 'event not found'
-        response.status = 404
+        response.status = 400
         return response
-    event.status = is_done
+    event.is_done = is_done
+    session.add(event)
     session.commit()
     session.close()
     return response

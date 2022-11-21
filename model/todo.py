@@ -81,7 +81,7 @@ class Event(Base):
     share_code_id = Column(ForeignKey('share_code.id'), nullable=True)
     share_code = relationship('ShareCode', back_populates='events')
 
-    status = Column(Boolean, default=False)
+    is_done = Column(Boolean, default=False)
 
     def to_dict(self):
         session = create_session()
@@ -98,7 +98,7 @@ class Event(Base):
             'group_id': setting['group_id'],
             'is_group': setting['is_group'],
             'members': members,
-            'is_done': self.status == 1,
+            'is_done': self.is_done,
         }
 
     @staticmethod
