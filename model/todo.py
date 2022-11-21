@@ -208,9 +208,10 @@ class EventSetting(Base):
             actions=actions
         )
         if is_column:
+            content = self.to_string(show_short=True)
             template = CarouselColumn(
                 title=self.title,
-                text=self.to_string(show_short=True),
+                text='-' if len(content) == 0 else content,
                 actions=actions
             )
         return template
