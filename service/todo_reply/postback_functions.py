@@ -38,7 +38,7 @@ def create_todo_by_text(event):
     if event.id is None:
         return TextSendMessage(text='建立失敗，請重新嘗試建立行事曆')
     EventSetting.update_event_setting(session, event.id, title=data['title']
-                                      , description=data['note']
+                                      , description=data['description']
                                       , start_time=datetime.datetime.fromisoformat(data['time']))
     event_id = event.id
     session.close()

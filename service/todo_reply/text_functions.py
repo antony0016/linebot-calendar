@@ -82,7 +82,7 @@ def confirm_todo_by_text(event):
                         'type_id': event_type.id,
                         'line_id': line_id,
                         'title': args[1],
-                        'note': args[2],
+                        'description': args[2],
                         'time': args[3],
                         'is_group': is_group,
                         'group_id': group_id,
