@@ -67,12 +67,14 @@ def delete_event_view(line_id, event_id=None):
 def update_event_status_view(line_id, event_id=None):
     if event_id is None:
         return jsonify(data={}, status=400, error_msg='event_id is None')
-    status = request.args.get('status', 'false', str).lower() == 'true'
-    print(status)
-    return change_event_status(line_id, event_id, status).to_json()
+    if 'is_done' not in request.form.keys():
+        return jsonify(data={}, status=400, error_msg='is_done is None')
+    is_done = request.args.get('is_done', 'false', str).lower() == 'true'
+    print(is_done)
+    return change_event_status(line_id, event_id, is_done).to_json()
 
 
-def change_event_status(line_id, event_id, status):
+def change_event_status(line_id, event_id, is_done):
     response = MyResponse()
     if event_id is None:
         response.error_msg = 'event_id is None'
@@ -84,7 +86,7 @@ def change_event_status(line_id, event_id, status):
         response.error_msg = 'event not found'
         response.status = 404
         return response
-    event.status = status
+    event.status = is_done
     session.commit()
     session.close()
     return response
