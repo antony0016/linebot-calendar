@@ -60,12 +60,12 @@ def text_message_handler(event):
 
 
 def postback_message_handler(event):
-    data = PostbackRequest(raw_data=event.postback.data)
+    request = PostbackRequest(raw_data=event.postback.data)
     replies = todo_postback_replies
     for model in replies:
         methods = replies[model]
-        if data.model == model and data.method in methods.keys():
-            return methods[data.method](event)
+        if request.model == model and request.method in methods.keys():
+            return methods[request.method](event)
     return TextMessage(text="命令出錯了(っ °Д °;)っ")
 
 

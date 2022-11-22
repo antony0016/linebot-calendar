@@ -193,7 +193,7 @@ class EventSetting(Base):
             actions += [
                 PostbackTemplateAction(
                     label='顯示細節及設定',
-                    data=request.dumps(model='update'),
+                    data=request.dumps(method='update'),
                 ),
                 URITemplateAction(
                     label='網頁操作',
