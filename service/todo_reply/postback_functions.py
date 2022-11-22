@@ -25,7 +25,7 @@ from linebot.models import (
 from model.todo import Event, EventSetting, EventType, EventMember, ShareCode, ShareRecord
 # postback request
 from model.response import PostbackRequest
-from public.response import get_event_details
+from public.response import get_event_details, get_quick_reply
 
 
 def confirm_todo_content(event):
@@ -50,24 +50,9 @@ def confirm_todo_content(event):
     type_name = EventType.get_type_by_id(session, data['type_id']).name
     session.close()
     # make quick reply options
-    request = PostbackRequest(model='event', data={'event_id': event_id})
-    quick_reply_attr = [
-        {'method': 'read', 'label': '查詢行事曆'},
-        {'method': 'update', 'label': '行事曆細節設定'},
-        {'method': 'delete', 'label': '刪除行事曆'},
-    ]
-    quick_reply_actions = []
-    for attr in quick_reply_attr:
-        quick_reply_actions.append(
-            QuickReplyButton(
-                action=PostbackTemplateAction(
-                    label=attr['label'],
-                    data=request.dumps(method=attr['method'])
-                )
-            )
-        )
+    quick_replies = get_quick_reply(event_id)
     return TextSendMessage(text=f'{type_name}: {data["title"]} 建立成功!', quick_reply=QuickReply(
-        items=quick_reply_actions,
+        items=quick_replies,
     ))
 
 
@@ -193,8 +178,8 @@ def delete_event(event):
     is_delete = Event.delete_event(session, data['event_id'])
     session.close()
     if not is_delete:
-        return TextSendMessage(text='刪除失敗')
-    return TextSendMessage(text='刪除成功')
+        return TextSendMessage(text='刪除失敗', quick_reply=QuickReply())
+    return TextSendMessage(text='刪除成功', quick_reply=QuickReply())
 
 
 def update_event_by_event_id(event):

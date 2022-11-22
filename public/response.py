@@ -1,7 +1,10 @@
 import json
 from typing import List
 
-from linebot.models import CarouselColumn, MessageTemplateAction, PostbackTemplateAction, URITemplateAction
+from linebot.models import (
+    CarouselColumn, MessageTemplateAction, PostbackTemplateAction, URITemplateAction,
+    QuickReplyButton, QuickReply, TextSendMessage, TemplateSendMessage, CarouselTemplate,
+)
 
 from model.response import PostbackRequest
 from model.todo import EventSetting
@@ -32,6 +35,29 @@ command_text = {
     'reminder': """$提醒$提醒名稱$備註$時間""",
     'todo': """$提醒$待辦事項名稱$備註$時間""",
 }
+
+
+def get_quick_reply(event_id=None):
+    request = PostbackRequest(model='event', data={'event_id': event_id})
+    quick_reply_attr = [
+        {'method': 'read', 'label': '查詢行事曆'},
+        {'method': 'update', 'label': '行事曆細節設定'},
+        {'method': 'delete', 'label': '刪除行事曆'},
+    ]
+    quick_reply_actions = []
+    for attr in quick_reply_attr:
+        quick_reply_actions.append(
+            QuickReplyButton(
+                action=PostbackTemplateAction(
+                    label=attr['label'],
+                    data=request.dumps(method=attr['method'])
+                )
+            )
+        )
+        if event_id is None:
+            break
+    return quick_reply_actions
+
 
 default_messages = {
     'add_event_columns': {
