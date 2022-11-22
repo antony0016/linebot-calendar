@@ -177,9 +177,10 @@ def delete_event(event):
     session = create_session()
     is_delete = Event.delete_event(session, data['event_id'])
     session.close()
+    quick_replies = get_quick_reply()
     if not is_delete:
-        return TextSendMessage(text='刪除失敗', quick_reply=QuickReply())
-    return TextSendMessage(text='刪除成功', quick_reply=QuickReply())
+        return TextSendMessage(text='刪除失敗', quick_reply=QuickReply(items=quick_replies))
+    return TextSendMessage(text='刪除成功', quick_reply=quick_replies)
 
 
 def update_event_by_event_id(event):
