@@ -168,6 +168,11 @@ def todo_edit_options(event):
                 CarouselColumn(
                     title='查看行事曆', text='查看行事曆',
                     actions=[
+                        MessageTemplateAction(
+                            alt_text='快速查看行事曆',
+                            label='快速查看行事曆',
+                            text='List'
+                        ),
                         URITemplateAction(
                             label='查看行事曆',
                             uri='https://liff.line.me/1657271223-yNdXKG7O'
@@ -177,6 +182,11 @@ def todo_edit_options(event):
                 CarouselColumn(
                     title='新建行事曆', text='新建行事曆',
                     actions=[
+                        MessageTemplateAction(
+                            alt_text='建立範例',
+                            label='建立範例',
+                            text='$提醒$範例提醒標題$範例提醒敘述欄$2022-12-31T23:59:59'
+                        ),
                         PostbackTemplateAction(
                             label='建立選項',
                             data=request.dumps(method='menu', data={})
