@@ -71,9 +71,12 @@ def postback_message_handler(event):
 
 def followed_event_handler(event):
     line_id = event.source.user_id
+    is_group = event.source.type == 'group'
     session = create_session()
     User.create_or_get(session, line_id)
-    columns = default_messages['add_event_columns']['single'] + default_messages['add_event_columns']['group']
+    columns = default_messages['add_event_columns']['group']
+    if not is_group:
+        columns += default_messages['add_event_columns']['single']
     reply = TemplateSendMessage(
         alt_text='感謝加入本帳號好友！',
         template=CarouselTemplate(
@@ -84,9 +87,4 @@ def followed_event_handler(event):
 
 
 def joined_event_handler(event):
-    if event.source.type == 'group':
-        group_id = event.source.group_id
-        # push_message = ''
-        # user_statistic = ''
-        # line_bot_api.push_message(group_id, TextMessage(text=user_statistic))
     return create_menu(event)

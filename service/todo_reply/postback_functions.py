@@ -1,5 +1,5 @@
 # models
-import datetime
+from datetime import datetime
 
 from service.todo_reply.text_functions import create_menu
 
@@ -25,40 +25,48 @@ from linebot.models import (
 from model.todo import Event, EventSetting, EventType, EventMember, ShareCode, ShareRecord
 # postback request
 from model.response import PostbackRequest
-from public.response import get_event_settings_response
+from public.response import get_event_details
 
 
-def create_todo_by_text(event):
+def confirm_todo_content(event):
     data = PostbackRequest(raw_data=event.postback.data).data
     is_group = event.source.type == 'group'
     group_id = event.source.group_id if is_group else None
     session = create_session()
-    event = Event.create_event(session, data['type_id'], data['line_id'],
-                               is_group=is_group, group_id=group_id)
+    # create event and event setting at the same time
+    event = Event.create_event(
+        session, data['type_id'], data['line_id'],
+        is_group=is_group, group_id=group_id
+    )
     if event.id is None:
         return TextSendMessage(text='建立失敗，請重新嘗試建立行事曆')
-    EventSetting.update_event_setting(session, event.id, title=data['title']
-                                      , description=data['description']
-                                      , start_time=datetime.datetime.fromisoformat(data['time']))
+    # update event setting to right content
+    EventSetting.update_event_setting(
+        session, event.id, title=data['title'],
+        description=data['description'],
+        start_time=datetime.fromisoformat(data['time'])
+    )
     event_id = event.id
+    type_name = EventType.get_type_by_id(session, data['type_id']).name
     session.close()
-    get_data = PostbackRequest(model='event', method='read')
-    update_data = PostbackRequest(model='event', method='update')
-    delete_data = PostbackRequest(model='event', method='delete')
-    quick_reply_actions = list()
-    quick_reply_actions.append(QuickReplyButton(
-        action=PostbackTemplateAction(label='查詢行事曆',
-                                      data=get_data.dumps(data={'event_id': event_id}))
-    ))
-    quick_reply_actions.append(QuickReplyButton(
-        action=PostbackTemplateAction(label='細節設定',
-                                      data=update_data.dumps(data={'event_id': event_id}))
-    ))
-    quick_reply_actions.append(QuickReplyButton(
-        action=PostbackTemplateAction(label='刪除',
-                                      data=delete_data.dumps(data={'event_id': event_id}))
-    ))
-    return TextSendMessage(text='建立成功', quick_reply=QuickReply(
+    # make quick reply options
+    request = PostbackRequest(model='event', data={'event_id': event_id})
+    quick_reply_attr = [
+        {'method': 'read', 'label': '查詢行事曆'},
+        {'method': 'update', 'label': '行事曆細節設定'},
+        {'method': 'delete', 'label': '刪除行事曆'},
+    ]
+    quick_reply_actions = []
+    for attr in quick_reply_attr:
+        quick_reply_actions.append(
+            QuickReplyButton(
+                action=PostbackTemplateAction(
+                    label=attr['label'],
+                    data=request.dumps(method=attr['method'])
+                )
+            )
+        )
+    return TextSendMessage(text=f'{type_name}: {data["title"]} 建立成功!', quick_reply=QuickReply(
         items=quick_reply_actions,
     ))
 
@@ -101,7 +109,7 @@ def list_todo_by_type_id(event):
     event_settings = EventSetting.all_event_setting(
         session, line_id, data['type_id'], is_group=is_group
     )
-    columns = get_event_settings_response(event_settings, is_group=is_group)
+    columns = get_event_details(event_settings, is_group=is_group)
 
     if len(columns) == 0:
         return create_menu(event)
@@ -201,7 +209,7 @@ def update_event_by_event_id(event):
     #     event_setting = EventSetting.update_event_setting(event_id, description='test')
     if column == 'start_time':
         raw_start_time = event.postback.params['datetime'] + ':00'
-        start_time = datetime.datetime.fromisoformat(raw_start_time)
+        start_time = datetime.fromisoformat(raw_start_time)
         event_setting = EventSetting.update_event_setting(session, event_id, start_time=start_time)
     if event_setting is None:
         reply = TextSendMessage(text='更新失敗')
@@ -209,19 +217,31 @@ def update_event_by_event_id(event):
     return reply
 
 
-def list_member(event):
+def list_event_members(event):
     data = PostbackRequest(raw_data=event.postback.data).data
-    columns = []
     session = create_session()
     the_event = Event.get_event(session, data['event_id'])
     if the_event is None:
         return TextSendMessage(text='找不到此活動/代辦事項/提醒')
-    event_members = the_event.members
-    event_setting = the_event.setting
-    join_data = PostbackRequest(model='event_member', method='create')
-    leave_data = PostbackRequest(model='event_member', method='delete')
-    new_data = PostbackRequest(model='event', method='update')
-
+    event_members, event_setting = the_event.members, the_event.setting
+    request = PostbackRequest(model='event_member')
+    # join in event option
+    columns = [
+        CarouselColumn(
+            title=event_setting.title,
+            text='加入此活動',
+            actions=[
+                PostbackTemplateAction(
+                    label='加入',
+                    data=request.dumps(
+                        method='create',
+                        data={'event_id': the_event.id}
+                    ),
+                )
+            ],
+        )
+    ]
+    # leave event option
     for member in event_members:
         columns.append(CarouselColumn(
             title=event_setting.title,
@@ -229,30 +249,18 @@ def list_member(event):
             actions=[
                 PostbackTemplateAction(
                     label='刪除',
-                    data=leave_data.dumps(
-                        {'member_id': member.id}
+                    data=request.dumps(
+                        method='delete',
+                        data={'member_id': member.id}
                     ),
                 )
             ],
         ))
-    columns.append(CarouselColumn(
-        title=event_setting.title,
-        text='加入此活動',
-        actions=[
-            PostbackTemplateAction(
-                label='加入',
-                data=join_data.dumps(
-                    {'event_id': the_event.id}
-                ),
-            )
-        ],
-    ))
     session.close()
-    if len(columns) > 0:
-        return TemplateSendMessage(
-            template=CarouselTemplate(columns=columns)
-            , alt_text='參與成員')
-    return TextSendMessage(text='好像哪裡怪怪的')
+    return TemplateSendMessage(
+        template=CarouselTemplate(columns=columns),
+        alt_text='參與成員'
+    )
 
 
 def new_share_code(event):
@@ -274,19 +282,21 @@ def new_share_code(event):
     return response
 
 
-# todo: member_join
 def member_join(event):
     data = PostbackRequest(raw_data=event.postback.data).data
     session = create_session()
+    line_id = event.source.user_id
     the_event = Event.get_event(session, data['event_id'])
-    member = EventMember.create_or_get(session, the_event.id, event.source.user_id)
-    session.close()
+    if the_event is None:
+        return TextSendMessage(text='找不到此活動/代辦事項/提醒')
+    member = EventMember.create_or_get(session, the_event.id, line_id)
+    message = '加入成功'
     if member is None:
-        return TextSendMessage(text='加入失敗，請再重新嘗試')
-    return TextSendMessage(text='加入成功')
+        message = '加入失敗'
+    session.close()
+    return TextSendMessage(text=message)
 
 
-# todo: member_leave
 def member_leave(event):
     data = PostbackRequest(raw_data=event.postback.data).data
     session = create_session()
@@ -294,4 +304,4 @@ def member_leave(event):
     session.close()
     if de_count > 0:
         return TextSendMessage(text='刪除成功')
-    return TextSendMessage(text='刪除失敗，請再重新嘗試')
+    return TextSendMessage(text='刪除失敗')

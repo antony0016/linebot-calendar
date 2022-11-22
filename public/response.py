@@ -1,33 +1,35 @@
 import json
 from typing import List
 
-from linebot.models import CarouselColumn, MessageTemplateAction, PostbackTemplateAction
+from linebot.models import CarouselColumn, MessageTemplateAction, PostbackTemplateAction, URITemplateAction
 
 from model.response import PostbackRequest
 from model.todo import EventSetting
 
 
-def get_event_settings_response(event_settings: List[EventSetting], is_group=False):
+def show_event_members_action(event_setting: EventSetting):
+    request = PostbackRequest(model='event', method='show_members', )
+    return PostbackTemplateAction(
+        label='查看成員',
+        data=request.dumps(data={'event_id': event_setting.event_id})
+    )
+
+
+def get_event_details(event_settings: List[EventSetting], is_group=False):
     columns = []
-    new_member_data = PostbackRequest(model='event_member', method='read')
     for event_setting in event_settings[:10]:
         actions = []
         if is_group:
-            actions.append(
-                PostbackTemplateAction(
-                    label="參與成員",
-                    data=new_member_data.dumps(data={'event_id': event_setting.event_id})
-                )
-            )
-        columns.append(event_setting.to_line_template(is_column=True, custom_actions=actions))
+            actions.append(show_event_members_action(event_setting))
+        columns.append(
+            event_setting.to_line_template(is_column=True, custom_actions=actions)
+        )
     return columns
 
 
 command_text = {
     'event': """$活動$活動名稱$備註$時間""",
-
     'reminder': """$提醒$提醒名稱$備註$時間""",
-
     'todo': """$提醒$待辦事項名稱$備註$時間""",
 }
 
@@ -40,11 +42,11 @@ default_messages = {
                 actions=[
                     MessageTemplateAction(
                         label='快速指令範例',
-                        text='範例：$提醒$記得吃藥$$2022-09-20T09:00:00',
+                        text='範例：$提醒$記得吃藥$藥放在櫃子裡$2022-09-20T09:00:00',
                     ),
-                    MessageTemplateAction(
+                    URITemplateAction(
                         label='網頁建立提醒',
-                        text='提醒',
+                        uri='https://liff.line.me/1657271223-veVzj6al?typeID=1',
                     ),
                 ]
             ),
@@ -56,9 +58,9 @@ default_messages = {
                         label='快速指令範例',
                         text='範例：$待辦事項$繳學費$$2022-09-27T09:00:00',
                     ),
-                    MessageTemplateAction(
+                    URITemplateAction(
                         label='網頁建立代辦事項',
-                        text='代辦事項',
+                        uri='https://liff.line.me/1657271223-veVzj6al?typeID=2',
                     ),
                 ]
             ),
@@ -72,11 +74,12 @@ default_messages = {
                         label='快速指令範例',
                         text='範例：$活動$週末出去玩$地點星聚點$2022-10-10T09:00:00',
                     ),
-                    MessageTemplateAction(
+                    URITemplateAction(
                         label='網頁建立活動',
-                        text='活動',
+                        uri='https://liff.line.me/1657271223-veVzj6al?typeID=3',
                     ),
                 ]
-            ), ],
+            ),
+        ],
     }
 }

@@ -7,7 +7,7 @@ from model.todo import EventType, Event, EventSetting, ShareCode, ShareRecord
 
 # request
 from model.response import PostbackRequest
-from public.response import default_messages, get_event_settings_response
+from public.response import default_messages, get_event_details
 
 from linebot.models import (
     # message
@@ -41,35 +41,34 @@ from linebot.models import (
 
 def create_menu(event):
     columns = default_messages['add_event_columns']['group']
-    if event.source.type != 'group':
+    is_group = event.source.type == 'group'
+    if not is_group:
         columns += default_messages['add_event_columns']['single']
-    reply = TemplateSendMessage(
-        alt_text='感謝把我加進群組！',
+    return TemplateSendMessage(
+        alt_text='感謝把我加進群組！請嘗試新增行事曆',
         template=CarouselTemplate(
             columns=columns,
         )
     )
-    return reply
 
 
-def confirm_todo_by_text(event):
+def create_todo_by_text(event):
     message: str = event.message.text
     line_id: str = event.source.user_id
     is_group: bool = event.source.type == 'group'
     group_id: str = event.source.group_id if is_group else None
-    # $title$description$time
-    args = message.split('$')
-    args.pop(0)
+    # $type_name$title$description$time
+    args = message.split('$')[1:]
+    if len(args) < 4:
+        return TextSendMessage(text='指令有誤 請重試')
+    type_name, title, description, time = args
     session = create_session()
-    event_type = EventType.get_type_by_name(session, args[0])
-    if event_type is None or len(args) < 4:
+    event_type = EventType.get_type_by_name(session, type_name)
+    if event_type is None:
         session.close()
-        return TextSendMessage(text='指令錯誤, 請重新參考正確指令')
-    new_data = PostbackRequest(method='create', model='event_text')
-    get_menu = PostbackRequest(method='read', model='menu')
-    confirm_text = """名稱：{}
-備註：{}
-時間：{}""".format(args[1], args[2], args[3])
+        return TextSendMessage(text='找不到該行事曆類型 請重試')
+    request = PostbackRequest(model='event', method='create')
+    confirm_text = f'標題：{title}\n備註：{description}\n時間：{time}'
     session.close()
     return TemplateSendMessage(
         alt_text='確認細節',
@@ -78,19 +77,27 @@ def confirm_todo_by_text(event):
             actions=[
                 PostbackTemplateAction(
                     label='是',
-                    data=new_data.dumps(data={
-                        'type_id': event_type.id,
-                        'line_id': line_id,
-                        'title': args[1],
-                        'description': args[2],
-                        'time': args[3],
-                        'is_group': is_group,
-                        'group_id': group_id,
-                    })
+                    data=request.dumps(
+                        model='event_text',
+                        method='create',
+                        data={
+                            'type_id': event_type.id,
+                            'line_id': line_id,
+                            'title': title,
+                            'description': description,
+                            'time': time,
+                            'is_group': is_group,
+                            'group_id': group_id,
+                        }
+                    )
                 ),
                 PostbackTemplateAction(
                     label='否',
-                    data=get_menu.dumps(data={}),
+                    data=request.dumps(
+                        model='menu',
+                        method='read',
+                        data={}
+                    ),
                 )
             ]
         )
@@ -151,6 +158,35 @@ def update_todo(event):
         )
 
 
+def todo_edit_options(event):
+    # line_id = event.source.user_id
+    request = PostbackRequest(model='event')
+    return TemplateSendMessage(
+        alt_text='選擇操作',
+        template=CarouselTemplate(
+            columns=[
+                CarouselColumn(
+                    title='查看行事曆', text='查看行事曆',
+                    actions=[
+                        URITemplateAction(
+                            label='查看行事曆',
+                            uri='https://liff.line.me/1657271223-yNdXKG7O'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    title='新建行事曆', text='新建行事曆',
+                    actions=[
+                        PostbackTemplateAction(
+                            label='建立選項',
+                            data=request.dumps(method='menu', data={})
+                        ),
+                    ]
+                ),
+            ]
+        ))
+
+
 def list_todo_option(event):
     get_data = PostbackRequest(model='event_setting', method='read')
     columns = [
@@ -191,8 +227,9 @@ def list_all_todo(event):
     line_id = event.source.user_id
     is_group = event.source.type == 'group'
     event_settings = EventSetting.all_event_setting(
-        session, line_id, is_group=is_group)
-    columns = get_event_settings_response(event_settings, is_group=is_group)
+        session, line_id, is_group=is_group
+    )
+    columns = get_event_details(event_settings, is_group=is_group)
     session.close()
     if len(columns) > 0:
         return TemplateSendMessage(
@@ -236,7 +273,7 @@ def share_event_list(event):
                         'event_id': the_event.id,
                     })
                 )
-            ], convert_action=True, is_column=True)
+            ], is_override=True, is_column=True)
         )
     session.close()
     if len(columns) > 0:
@@ -263,7 +300,7 @@ def show_code_events(event):
                     label='來源',
                     text='分享人：{}\n分享碼：{}'.format(share_code.share_user.name, share_code.code)
                 )
-            ], convert_action=True, is_column=True)
+            ], is_override=True, is_column=True)
         )
     return TemplateSendMessage(
         alt_text='行事曆列表',

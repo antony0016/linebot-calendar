@@ -1,6 +1,6 @@
 from linebot.models import (
     TemplateSendMessage, ButtonsTemplate, CarouselColumn, CarouselTemplate,
-    PostbackTemplateAction
+    PostbackTemplateAction, URITemplateAction
 )
 
 from model.db import create_session
@@ -185,33 +185,35 @@ class EventSetting(Base):
                  f'{"時間：" if with_column else ""}{event_time}'[0:57]
         return result[0:56] + '...' if show_short else result
 
-    def to_line_template(self, is_column=False, custom_actions=None, convert_action=False):
-        update_data = PostbackRequest(model='event', method='update')
-        delete_data = PostbackRequest(model='event', method='delete')
-        actions = [
-            PostbackTemplateAction(
-                label='顯示細節及設定',
-                data=update_data.dumps(data={'event_id': self.event_id})
-            ),
-            PostbackTemplateAction(
-                label="刪除",
-                data=delete_data.dumps(data={"event_id": self.event_id}),
-            ),
-        ]
-        if custom_actions is not None:
-            actions += custom_actions
-        if convert_action and custom_actions is not None:
-            actions = custom_actions
+    def to_line_template(self, is_column=False, custom_actions=None, is_override=False):
+        request = PostbackRequest(model='event', data={'event_id': self.event_id})
+        custom_actions = [] if custom_actions is None else custom_actions
+        actions = custom_actions
+        if not is_override:
+            actions += [
+                PostbackTemplateAction(
+                    label='顯示細節及設定',
+                    data=request.dumps(model='update'),
+                ),
+                URITemplateAction(
+                    label='網頁操作',
+                    uri=f'https://liff.line.me/1657271223-3Gz7xDA1?eventID={self.event_id}',
+                ),
+                PostbackTemplateAction(
+                    label="刪除",
+                    data=request.dumps(method='delete'),
+                ),
+            ]
         content = self.to_string(show_short=True)
         template = ButtonsTemplate(
             title=self.title,
-            text='-' if len(content) == 0 else content,
+            text=content,
             actions=actions
         )
         if is_column:
             template = CarouselColumn(
                 title=self.title,
-                text='-' if len(content) == 0 else content,
+                text=content,
                 actions=actions
             )
         return template
