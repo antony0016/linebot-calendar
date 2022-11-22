@@ -180,7 +180,7 @@ def delete_event(event):
     quick_replies = get_quick_reply()
     if not is_delete:
         return TextSendMessage(text='刪除失敗', quick_reply=QuickReply(items=quick_replies))
-    return TextSendMessage(text='刪除成功', quick_reply=quick_replies)
+    return TextSendMessage(text='刪除成功', quick_reply=QuickReply(items=quick_replies))
 
 
 def update_event_by_event_id(event):
