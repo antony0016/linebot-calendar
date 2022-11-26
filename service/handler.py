@@ -2,7 +2,7 @@ import json
 
 # response define
 from model.response import PostbackRequest
-from public.response import default_messages
+from public.response import get_default_message
 from public.instance import line_bot_api
 
 # reply processor mapper
@@ -71,12 +71,12 @@ def postback_message_handler(event):
 
 def followed_event_handler(event):
     line_id = event.source.user_id
-    is_group = event.source.type == 'group'
+    group_id = None
+    if event.source.type == 'group':
+        group_id = event.source.group_id
     session = create_session()
     User.create_or_get(session, line_id)
-    columns = default_messages['add_event_columns']['group']
-    if not is_group:
-        columns += default_messages['add_event_columns']['single']
+    columns = get_default_message(group_id)
     reply = TemplateSendMessage(
         alt_text='感謝加入本帳號好友！',
         template=CarouselTemplate(

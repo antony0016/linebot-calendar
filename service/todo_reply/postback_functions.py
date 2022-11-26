@@ -44,7 +44,7 @@ def confirm_todo_content(event):
     EventSetting.update_event_setting(
         session, event.id, title=data['title'],
         description=data['description'],
-        start_time=datetime.fromisoformat(data['time'])
+        start_time=datetime.fromisoformat(data['time']),
     )
     event_id = event.id
     type_name = EventType.get_type_by_id(session, data['type_id']).name

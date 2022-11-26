@@ -7,7 +7,7 @@ from model.todo import EventType, Event, EventSetting, ShareCode, ShareRecord
 
 # request
 from model.response import PostbackRequest
-from public.response import default_messages, get_event_details
+from public.response import get_default_message, get_event_details
 
 from linebot.models import (
     # message
@@ -40,14 +40,61 @@ from linebot.models import (
 # use text to crud event
 
 def create_menu(event):
-    columns = default_messages['add_event_columns']['group']
-    is_group = event.source.type == 'group'
-    if not is_group:
-        columns += default_messages['add_event_columns']['single']
+    group_id = None
+    if event.source.type == 'group':
+        group_id = event.source.group_id
+    columns = get_default_message(group_id)
     return TemplateSendMessage(
         alt_text='感謝把我加進群組！請嘗試新增行事曆',
         template=CarouselTemplate(
             columns=columns,
+        )
+    )
+
+
+def bot_action_list(event):
+    # request = PostbackRequest(model='menu', method='read')
+    group_id = event.source.group_id if event.source.group_id else ''
+    parameter = ''
+    if group_id != '':
+        parameter = f'&group_id={group_id}'
+    return TemplateSendMessage(
+        alt_text='操作列表',
+        template=CarouselTemplate(
+            columns=[
+                CarouselColumn(
+                    title='活動相關操作',
+                    text='活動相關操作',
+                    actions=[
+                        # search event
+                        URITemplateAction(
+                            label='搜尋活動',
+                            uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=1{parameter}'
+                        ),
+                        # new event
+                        URITemplateAction(
+                            label='新增活動',
+                            uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=1{parameter}'
+                        ),
+                    ]
+                ),
+                CarouselColumn(
+                    title='待辦事項操作',
+                    text='待辦事項操作',
+                    actions=[
+                        # search to-do
+                        URITemplateAction(
+                            label='搜尋待辦事項',
+                            uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=3{parameter}'
+                        ),
+                        # new to-do
+                        URITemplateAction(
+                            label='新增待辦事項',
+                            uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=3{parameter}'
+                        ),
+                    ]
+                ),
+            ]
         )
     )
 
@@ -158,7 +205,45 @@ def update_todo(event):
         )
 
 
-def todo_edit_options(event):
+def group_event_edit_options(event):
+    # line_id = event.source.user_id
+    request = PostbackRequest(model='event')
+    return TemplateSendMessage(
+        alt_text='選擇操作',
+        template=CarouselTemplate(
+            columns=[
+                CarouselColumn(
+                    title='查看活動', text='查看活動',
+                    actions=[
+                        MessageTemplateAction(
+                            alt_text='快速查看行事曆',
+                            label='快速查看行事曆',
+                            text='List'
+                        ),
+                        URITemplateAction(
+                            label='查看行事曆',
+                            uri='https://liff.line.me/1657271223-yNdXKG7O'
+                        )
+                    ]
+                ),
+                CarouselColumn(
+                    title='新建', text='新建行事曆',
+                    actions=[
+                        PostbackTemplateAction(
+                            label='指令建立',
+                            data=request.dumps(method='menu', data={})
+                        ),
+                        URITemplateAction(
+                            label='網頁建立',
+                            uri='https://liff.line.me/1657271223-veVzj6al?typeID=2'
+                        )
+                    ]
+                ),
+            ]
+        ))
+
+
+def reminder_edit_options(event):
     # line_id = event.source.user_id
     request = PostbackRequest(model='event')
     return TemplateSendMessage(
@@ -182,15 +267,14 @@ def todo_edit_options(event):
                 CarouselColumn(
                     title='新建行事曆', text='新建行事曆',
                     actions=[
-                        MessageTemplateAction(
-                            alt_text='建立範例',
-                            label='建立範例',
-                            text='$提醒$範例提醒標題$範例提醒敘述欄$2022-12-31T23:59:59'
-                        ),
                         PostbackTemplateAction(
-                            label='建立選項',
+                            label='指令建立',
                             data=request.dumps(method='menu', data={})
                         ),
+                        URITemplateAction(
+                            label='網頁建立',
+                            uri='https://liff.line.me/1657271223-veVzj6al?typeID=2'
+                        )
                     ]
                 ),
             ]

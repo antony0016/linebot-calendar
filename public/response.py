@@ -24,6 +24,7 @@ def get_event_details(event_settings: List[EventSetting], is_group=False):
         actions = []
         if is_group:
             actions.append(show_event_members_action(event_setting))
+        print(event_setting.start_time)
         columns.append(
             event_setting.to_line_template(is_column=True, custom_actions=actions)
         )
@@ -33,7 +34,7 @@ def get_event_details(event_settings: List[EventSetting], is_group=False):
 command_text = {
     'event': """$活動$活動名稱$備註$時間""",
     'reminder': """$提醒$提醒名稱$備註$時間""",
-    'todo': """$提醒$待辦事項名稱$備註$時間""",
+    'todo': """$待辦事項$待辦事項名稱$備註$時間""",
 }
 
 
@@ -59,9 +60,9 @@ def get_quick_reply(event_id=None):
     return quick_reply_actions
 
 
-default_messages = {
-    'add_event_columns': {
-        'single': [
+def get_default_message(group_id=None):
+    if group_id is None:
+        return [
             CarouselColumn(
                 title='新建提醒',
                 text=command_text['reminder'],
@@ -72,12 +73,12 @@ default_messages = {
                     ),
                     URITemplateAction(
                         label='網頁建立提醒',
-                        uri='https://liff.line.me/1657271223-veVzj6al?typeID=1',
+                        uri='https://liff.line.me/1657271223-veVzj6al?typeID=2',
                     ),
                 ]
             ),
             CarouselColumn(
-                title='新建代辦事項',
+                title='新建待辦事項',
                 text=command_text['todo'],
                 actions=[
                     MessageTemplateAction(
@@ -85,27 +86,39 @@ default_messages = {
                         text='範例：$待辦事項$繳學費$$2022-09-27T09:00:00',
                     ),
                     URITemplateAction(
-                        label='網頁建立代辦事項',
-                        uri='https://liff.line.me/1657271223-veVzj6al?typeID=2',
-                    ),
-                ]
-            ),
-        ],
-        'group': [
-            CarouselColumn(
-                title='新建活動',
-                text=command_text['event'],
-                actions=[
-                    MessageTemplateAction(
-                        label='快速指令範例',
-                        text='範例：$活動$週末出去玩$地點星聚點$2022-10-10T09:00:00',
-                    ),
-                    URITemplateAction(
-                        label='網頁建立活動',
+                        label='網頁建立待辦事項',
                         uri='https://liff.line.me/1657271223-veVzj6al?typeID=3',
                     ),
                 ]
             ),
-        ],
-    }
-}
+        ]
+    return [
+        CarouselColumn(
+            title='新建活動',
+            text=command_text['event'],
+            actions=[
+                MessageTemplateAction(
+                    label='快速指令範例',
+                    text='範例：$活動$週末出去玩$地點星聚點$2022-10-10T09:00:00',
+                ),
+                URITemplateAction(
+                    label='網頁建立活動',
+                    uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=1&group_id={group_id}',
+                ),
+            ]
+        ),
+        CarouselColumn(
+            title='新建待辦事項',
+            text=command_text['todo'],
+            actions=[
+                MessageTemplateAction(
+                    label='快速指令範例',
+                    text='範例：$待辦事項$繳學費$$2022-09-27T09:00:00',
+                ),
+                URITemplateAction(
+                    label='網頁建立待辦事項',
+                    uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=3&group_id={group_id}',
+                ),
+            ]
+        ),
+    ]

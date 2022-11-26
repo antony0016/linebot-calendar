@@ -8,7 +8,8 @@ from service.todo_reply.text_functions import (
     db_test,
     share_event_list,
     show_code_events,
-    todo_edit_options,
+    reminder_edit_options,
+    bot_action_list,
 )
 
 from service.todo_reply.postback_functions import (
@@ -53,7 +54,15 @@ todo_text_replies = [
     },
     {
         'trigger': 'my-todo',
-        'reply': todo_edit_options,
+        'reply': reminder_edit_options,
+    },
+    {
+        'trigger': 'group-event',
+        'reply': reminder_edit_options,
+    },
+    {
+        'trigger': '協作行事曆',
+        'reply': bot_action_list,
     },
     # show user count
     {

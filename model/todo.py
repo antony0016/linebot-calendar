@@ -6,7 +6,7 @@ from linebot.models import (
 from model.db import create_session
 from model.user import User
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from public.instance import Base, flask_instance
 
@@ -174,11 +174,12 @@ class EventSetting(Base):
 
     def to_string(self, with_column=True, with_new_line=True, show_short=False):
         sep = '\n' if with_new_line else ' '
-        event_date = '未設定'
-        event_time = '未設定'
+        event_date = ' '
+        event_time = ' '
         if self.start_time is not None:
-            event_date = self.start_time.strftime('%Y-%m-%d')
-            event_time = self.start_time.strftime('%H:%M:%S')
+            start_time = self.start_time + timedelta(hours=8)
+            event_date = start_time.strftime('%Y-%m-%d')
+            event_time = start_time.strftime('%H:%M:%S')
         result = f'{"標題：" if with_column else ""}{self.title}{sep}' \
                  f'{"敘述：" if with_column else ""}{self.description}{sep}' \
                  f'{"日期：" if with_column else ""}{event_date}{sep}' \
@@ -191,9 +192,9 @@ class EventSetting(Base):
         actions = custom_actions
         if not is_override:
             actions += [
-                PostbackTemplateAction(
-                    label='顯示細節及設定',
-                    data=request.dumps(method='update'),
+                URITemplateAction(
+                    label='顯示細節',
+                    uri=f'https://liff.line.me/1657271223-2bLxz75P?eventID={self.event_id}',
                 ),
                 URITemplateAction(
                     label='網頁操作',
