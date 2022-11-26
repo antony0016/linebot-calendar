@@ -26,6 +26,10 @@ from service.todo_reply.postback_functions import (
     new_share_code,
 )
 
+# from service.todo_reply.text_other_functions import (
+#
+# )
+
 todo_text_replies = [
     # create event by text
     # ok
@@ -76,6 +80,14 @@ todo_text_replies = [
     {
         'trigger': '@code',
         'reply': show_code_events,
+    },
+    {
+        'trigger': 'weather',
+        'reply': help,
+    },
+    {
+        'trigger': 'star-sign',
+        'reply': help,
     },
 ]
 

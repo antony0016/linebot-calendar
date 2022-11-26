@@ -106,8 +106,13 @@ def create_todo_by_text(event):
     group_id: str = event.source.group_id if is_group else None
     # $type_name$title$description$time
     args = message.split('$')[1:]
-    if len(args) < 4:
-        return TextSendMessage(text='指令有誤 請重試')
+    if args[0] == '待辦事項':
+        if len(args) == 2:
+            args += [' ', ' ']
+        else:
+            return TextSendMessage(text='請輸入正確格式！')
+    if len(args) != 4:
+        return TextSendMessage(text='請輸入正確格式！')
     type_name, title, description, time = args
     session = create_session()
     event_type = EventType.get_type_by_name(session, type_name)
@@ -116,11 +121,13 @@ def create_todo_by_text(event):
         return TextSendMessage(text='找不到該行事曆類型 請重試')
     request = PostbackRequest(model='event', method='create')
     confirm_text = f'標題：{title}\n備註：{description}\n時間：{time}'
+    if args[0] == '待辦事項':
+        confirm_text = f'待辦事項：{title}'
     session.close()
     return TemplateSendMessage(
         alt_text='確認細節',
         template=ConfirmTemplate(
-            text=confirm_text,
+            text=confirm_text[:299],
             actions=[
                 PostbackTemplateAction(
                     label='是',
@@ -133,7 +140,6 @@ def create_todo_by_text(event):
                             'title': title,
                             'description': description,
                             'time': time,
-                            'is_group': is_group,
                             'group_id': group_id,
                         }
                     )

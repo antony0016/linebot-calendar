@@ -98,6 +98,7 @@ class Event(Base):
             'group_id': setting['group_id'],
             'is_group': setting['is_group'],
             'members': members,
+            'spots': setting['spots'],
             'is_done': self.is_done,
         }
 
@@ -159,7 +160,11 @@ class EventSetting(Base):
     description = Column(String, default=' ')
     start_time = Column(DateTime)
 
+    spots = relationship('EventSpot', back_populates='setting')
+
     def to_dict(self):
+        session = create_session()
+        spots = [spot.to_dict() for spot in EventSpot.all_spot_by_event_setting_id(session, self.id)]
         return {
             'id': self.id,
             'create_time': self.create_time,
@@ -170,6 +175,7 @@ class EventSetting(Base):
             'title': self.title,
             'description': self.description,
             'start_time': self.start_time,
+            'spots': spots,
         }
 
     def to_string(self, with_column=True, with_new_line=True, show_short=False):
@@ -184,7 +190,9 @@ class EventSetting(Base):
                  f'{"敘述：" if with_column else ""}{self.description}{sep}' \
                  f'{"日期：" if with_column else ""}{event_date}{sep}' \
                  f'{"時間：" if with_column else ""}{event_time}'[0:57]
-        return result[0:56] + '...' if show_short else result
+        if self.event.type_id == 3:
+            result = f'{"標題：" if with_column else ""}{self.title}{sep}'
+        return result[0:56] + '...' if show_short and len(result) > 56 else result
 
     def to_line_template(self, is_column=False, custom_actions=None, is_override=False):
         request = PostbackRequest(model='event', data={'event_id': self.event_id})
@@ -262,7 +270,8 @@ class EventSetting(Base):
         return event_setting
 
     @staticmethod
-    def update_event_setting(session: Session, event_id, title=None, description=None, start_time: datetime = None):
+    def update_event_setting(session: Session, event_id, title=None, description=None, start_time: datetime = None,
+                             spots=None):
         event_setting = EventSetting.get_event_setting_by_event_id(session, event_id)
         if event_setting is None:
             EventSetting.create_event_setting(session, event_id)
@@ -400,3 +409,54 @@ class ShareRecord(Base):
         session.add(share_record)
         session.commit()
         return share_record
+
+
+class EventSpot(Base):
+    __tablename__ = 'event_spot'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    create_time = Column(DateTime, server_default=func.now())
+    edit_time = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
+
+    setting = relationship('EventSetting', back_populates='spots')
+    event_setting_id = Column(ForeignKey('event_setting.id'), nullable=False)
+    name = Column(String(255), nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'event_setting_id': self.event_setting_id,
+            'name': self.name,
+        }
+
+    @staticmethod
+    def all_spot_by_event_setting_id(session: Session, event_setting_id):
+        return session.query(EventSpot).filter(EventSpot.event_setting_id == event_setting_id).all()
+
+    @staticmethod
+    def create_or_get(session: Session, event_setting_id, name):
+        event_spot = session.query(EventSpot).filter(
+            EventSpot.event_setting_id == event_setting_id,
+            EventSpot.name == name
+        ).first()
+        if event_spot is None:
+            event_spot = EventSpot(event_setting_id=event_setting_id, name=name)
+            session.add(event_spot)
+            session.commit()
+        return event_spot
+
+    @staticmethod
+    def delete(session: Session, event_spot_id):
+        delete_count = session.query(EventSpot).filter(
+            EventSpot.id == event_spot_id
+        ).delete()
+        session.commit()
+        return delete_count > 0
+
+    @staticmethod
+    def delete_by_name(session: Session, event_setting_id, name):
+        delete_count = session.query(EventSpot).filter(
+            EventSpot.event_setting_id == event_setting_id,
+            EventSpot.name == name
+        ).delete()
+        session.commit()
+        return delete_count > 0

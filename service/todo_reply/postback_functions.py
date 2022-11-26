@@ -1,5 +1,5 @@
 # models
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from service.todo_reply.text_functions import create_menu
 
@@ -30,8 +30,8 @@ from public.response import get_event_details, get_quick_reply
 
 def confirm_todo_content(event):
     data = PostbackRequest(raw_data=event.postback.data).data
-    is_group = event.source.type == 'group'
-    group_id = event.source.group_id if is_group else None
+    is_group = data.get('group_id', None) is not None
+    group_id = data.get('group_id', None)
     session = create_session()
     # create event and event setting at the same time
     event = Event.create_event(
@@ -40,11 +40,14 @@ def confirm_todo_content(event):
     )
     if event.id is None:
         return TextSendMessage(text='建立失敗，請重新嘗試建立行事曆')
+    start_time = None
+    if data['time'].replace(' ', '') != '':  # if time is not empty
+        start_time = datetime.fromisoformat(data['time']) - timedelta(hours=8)
     # update event setting to right content
     EventSetting.update_event_setting(
         session, event.id, title=data['title'],
         description=data['description'],
-        start_time=datetime.fromisoformat(data['time']),
+        start_time=start_time
     )
     event_id = event.id
     type_name = EventType.get_type_by_id(session, data['type_id']).name

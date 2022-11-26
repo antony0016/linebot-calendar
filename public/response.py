@@ -22,8 +22,8 @@ def get_event_details(event_settings: List[EventSetting], is_group=False):
     columns = []
     for event_setting in event_settings[:10]:
         actions = []
-        if is_group:
-            actions.append(show_event_members_action(event_setting))
+        # if is_group:
+        # actions.append(show_event_members_action(event_setting))
         print(event_setting.start_time)
         columns.append(
             event_setting.to_line_template(is_column=True, custom_actions=actions)
@@ -34,7 +34,7 @@ def get_event_details(event_settings: List[EventSetting], is_group=False):
 command_text = {
     'event': """$活動$活動名稱$備註$時間""",
     'reminder': """$提醒$提醒名稱$備註$時間""",
-    'todo': """$待辦事項$待辦事項名稱$備註$時間""",
+    'todo': """$待辦事項$待辦事項名稱""",
 }
 
 
@@ -83,7 +83,7 @@ def get_default_message(group_id=None):
                 actions=[
                     MessageTemplateAction(
                         label='快速指令範例',
-                        text='範例：$待辦事項$繳學費$$2022-09-27T09:00:00',
+                        text='範例：$待辦事項$繳學費',
                     ),
                     URITemplateAction(
                         label='網頁建立待辦事項',
@@ -113,7 +113,7 @@ def get_default_message(group_id=None):
             actions=[
                 MessageTemplateAction(
                     label='快速指令範例',
-                    text='範例：$待辦事項$繳學費$$2022-09-27T09:00:00',
+                    text='範例：$待辦事項$繳學費',
                 ),
                 URITemplateAction(
                     label='網頁建立待辦事項',

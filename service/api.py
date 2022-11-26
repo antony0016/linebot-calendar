@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import request, jsonify, views
 
 from model.db import create_session
-from model.todo import Event, EventSetting, EventMember
+from model.todo import Event, EventSetting, EventMember, EventSpot
 from public.instance import line_bot_api, flask_instance
 
 
@@ -122,6 +122,9 @@ def new_event(line_id, data=None):
     if 'start_time' in data:
         start_time = datetime.fromisoformat(data['start_time'].replace('Z', '+00:00'))
         EventSetting.update_event_setting(session, events[0].id, start_time=start_time)
+    if 'spots' in data:
+        for spot in json.loads(data['spots']):
+            EventSpot.create_or_get(session, events[0].setting.id, spot['name'])
     if 'members' in data:
         print(data['members'])
         for member in json.loads(data['members']):
@@ -155,12 +158,22 @@ def update_event(line_id, event_id, data):
         Event.update_event(session, event_id, type_id=data['type_id'])
     if 'members' in data:
         now_members = EventMember.all_member_by_event(session, event_id)
-        for member in data['members']:
-            if member['line_id'] not in [m.user.line_id for m in now_members]:
-                EventMember.create_or_get(session, event_id, member['line_id'])
-        for member in now_members:
-            if member.user.line_id not in [m['line_id'] for m in data['members']]:
-                EventMember.delete_member_by_event_id_and_line_id(session, event_id, member.user.line_id)
+        new_members = json.loads(data['members'])
+        now_member_line_ids = [member.user.line_id for member in now_members]
+        new_member_line_ids = [member['line_id'] for member in new_members]
+        for new_member in new_members:
+            if new_member['line_id'] not in now_member_line_ids:
+                EventMember.create_or_get(session, event_id, new_member['line_id'])
+        for now_member in now_members:
+            if now_member.user.line_id not in new_member_line_ids:
+                EventMember.delete_member_by_event_id_and_line_id(session, event_id, now_member.user.line_id)
+    if 'spots' in data:
+        now_spots = EventSpot.all_spot_by_event_setting_id(session, event.setting.id)
+        new_spots = json.loads(data['spots'])
+        for now_spot in now_spots:
+            EventSpot.delete_by_name(session, event.setting.id, now_spot.name)
+        for spot in new_spots:
+            EventSpot.create_or_get(session, event.setting.id, spot['name'])
     event = Event.get_event(session, event_id)
     response.data = [event.to_dict()]
     session.close()
