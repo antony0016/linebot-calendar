@@ -26,9 +26,12 @@ from service.todo_reply.postback_functions import (
     new_share_code,
 )
 
-# from service.todo_reply.text_other_functions import (
-#
-# )
+from service.todo_reply.text_other_functions import (
+    weather_menu,
+    weather_search,
+    star_sign_menu,
+    get_star_sign,
+)
 
 todo_text_replies = [
     # create event by text
@@ -83,11 +86,11 @@ todo_text_replies = [
     },
     {
         'trigger': 'weather',
-        'reply': help,
+        'reply': weather_menu,
     },
     {
         'trigger': 'star-sign',
-        'reply': help,
+        'reply': star_sign_menu,
     },
 ]
 
@@ -129,8 +132,11 @@ todo_postback_replies = {
     },
     'share_code': {
         'create': new_share_code,
-    }
-    # 'a': {
-    #     'show': test_func,
-    # }
+    },
+    'weather': {
+        'read': weather_search,
+    },
+    'star_sign': {
+        'read': get_star_sign,
+    },
 }

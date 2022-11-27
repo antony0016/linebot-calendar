@@ -22,7 +22,7 @@ from linebot.models import (
     QuickReplyButton,
 )
 
-from model.todo import Event, EventSetting, EventType, EventMember, ShareCode, ShareRecord
+from model.todo import Event, EventSetting, EventType, EventMember, ShareCode
 # postback request
 from model.response import PostbackRequest
 from public.response import get_event_details, get_quick_reply
@@ -255,7 +255,6 @@ def list_event_members(event):
 def new_share_code(event):
     data = PostbackRequest(raw_data=event.postback.data).data
     line_id = event.source.user_id
-    response = TextSendMessage(text='發生錯誤')
     session = create_session()
     the_event = Event.get_event(session, data['event_id'])
     events = []

@@ -56,7 +56,7 @@ def text_message_handler(event):
             return reply['reply'](event)
     if '*' in message:
         TextMessage(text="----------------")
-    return TextMessage(text="這個訊息我沒辦法回覆ψ(._. )>")
+    return None
 
 
 def postback_message_handler(event):
@@ -66,7 +66,7 @@ def postback_message_handler(event):
         methods = replies[model]
         if request.model == model and request.method in methods.keys():
             return methods[request.method](event)
-    return TextMessage(text="命令出錯了(っ °Д °;)っ")
+    return None
 
 
 def followed_event_handler(event):

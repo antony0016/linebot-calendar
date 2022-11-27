@@ -19,7 +19,8 @@ class User(Base):
     events = relationship('Event', back_populates='create_user')
     member = relationship('EventMember', back_populates='user')
     shared_codes = relationship('ShareCode', back_populates='share_user')
-    share_records = relationship('ShareRecord', back_populates='user')
+
+    # share_records = relationship('ShareRecord', back_populates='user')
 
     @staticmethod
     def create_or_get(session: Session, line_id):

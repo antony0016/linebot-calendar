@@ -1,6 +1,7 @@
 from linebot import (LineBotApi, WebhookHandler)
 from linebot.exceptions import (InvalidSignatureError)
 from service.other_service import get_weather
+from service.sample_reply.weather_function import current_weather
 from constant.constants import CITIES
 from linebot.models import (
     # message
@@ -452,32 +453,38 @@ def function_list(event):
 # 天氣
 def weather_search(event):
     message = event.message.text
-
     if '-' not in message:
         return TextSendMessage(text="查詢格式為: 天氣-縣市")
-    city = message.replace(' ', '').split('-')[1].replace('台', '臺')
+    location_args = message.replace(' ', '').split('-')
+    location_args.pop(0)
+    city = location_args[0].replace('台', '臺')
+    area = ''
+    if len(location_args) > 1:
+        area = location_args[1].replace('台', '臺')
     if city not in CITIES:
-        return TextSendMessage(text="查詢格式為: 天氣-縣市")
-    res = get_weather(city)
-    return TemplateSendMessage(
-        alt_text=city + '未來 36 小時天氣預測',
-        template=CarouselTemplate(
-            columns=[
-                CarouselColumn(
-                    thumbnail_image_url='https://i.imgur.com/Ex3Opfo.png',
-                    title='{} ~ {}'.format(res[0][0]['startTime'][5:-3], res[0][0]['endTime'][5:-3]),
-                    text='天氣狀況 {}\n溫度 {} ~ {} °C\n降雨機率 {}'.format(data[0]['parameter']['parameterName'],
-                                                                  data[2]['parameter']['parameterName'],
-                                                                  data[4]['parameter']['parameterName'],
-                                                                  data[1]['parameter'][
-                                                                      'parameterName']),
-                    actions=[
-                        URIAction(
-                            label='詳細天氣資訊',
-                            uri='https://www.cwb.gov.tw/V8/C/W/County/index.html'
-                        )
-                    ]
-                ) for data in res
-            ]
-        )
-    )
+        return TextSendMessage(text="查無此縣市")
+    # res = get_weather(city)
+    res2 = current_weather(city + area)
+    # print(res, res2)
+    return TextSendMessage(text=res2)
+    # return TemplateSendMessage(
+    #     alt_text=city + '未來 36 小時天氣預測',
+    #     template=CarouselTemplate(
+    #         columns=[
+    #             CarouselColumn(
+    #                 thumbnail_image_url='https://i.imgur.com/Ex3Opfo.png',
+    #                 title='{} ~ {}'.format(res[0][0]['startTime'][5:-3], res[0][0]['endTime'][5:-3]),
+    #                 text='天氣狀況 {}\n溫度 {} ~ {} °C\n降雨機率 {}'.format(
+    #                     data[0]['parameter']['parameterName'], data[2]['parameter']['parameterName'],
+    #                     data[4]['parameter']['parameterName'], data[1]['parameter']['parameterName']
+    #                 ),
+    #                 actions=[
+    #                     URIAction(
+    #                         label='詳細天氣資訊',
+    #                         uri='https://www.cwb.gov.tw/V8/C/W/County/index.html'
+    #                     )
+    #                 ]
+    #             ) for data in res
+    #         ]
+    #     )
+    # )

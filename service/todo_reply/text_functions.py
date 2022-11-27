@@ -3,7 +3,7 @@ import datetime
 
 from model.db import create_session
 from model.user import User
-from model.todo import EventType, Event, EventSetting, ShareCode, ShareRecord
+from model.todo import EventType, Event, EventSetting, ShareCode
 
 # request
 from model.response import PostbackRequest
@@ -251,6 +251,9 @@ def group_event_edit_options(event):
 
 def reminder_edit_options(event):
     # line_id = event.source.user_id
+    group_id = ''
+    is_group = event.source.type == 'group'
+    group_id = event.source.group_id if is_group else None
     request = PostbackRequest(model='event')
     return TemplateSendMessage(
         alt_text='選擇操作',

@@ -357,7 +357,7 @@ class ShareCode(Base):
     code = Column(String(255), nullable=False, unique=True)
     is_active = Column(Boolean, nullable=False, default=True)
 
-    share_records = relationship('ShareRecord', back_populates='share_code')
+    # share_records = relationship('ShareRecord', back_populates='share_code')
 
     @staticmethod
     def create_share_code(session: Session, event_ids, line_id):
@@ -380,35 +380,35 @@ class ShareCode(Base):
         return share_code
 
 
-class ShareRecord(Base):
-    __tablename__ = 'share_record'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    create_time = Column(DateTime, server_default=func.now())
-    edit_time = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
-
-    user_id = Column(ForeignKey('user.id'), nullable=False)
-    user = relationship('User', back_populates='share_records')
-
-    share_code_id = Column(ForeignKey('share_code.id'), nullable=False)
-    share_code = relationship('ShareCode', back_populates='share_records')
-
-    @staticmethod
-    def get_record_by_user_id_and_share_code_id(session: Session, user_id, share_code):
-        code = session.query(ShareCode).filter(ShareCode.code == share_code).first()
-        if code is None:
-            return None
-        return session.query(ShareRecord).filter(
-            ShareRecord.user_id == user_id,
-            ShareRecord.share_code_id == code.id
-        ).first()
-
-    @staticmethod
-    def new_record(session: Session, share_code_id, line_id):
-        user = User.create_or_get(session, line_id)
-        share_record = ShareRecord(user_id=user.id, share_code_id=share_code_id)
-        session.add(share_record)
-        session.commit()
-        return share_record
+# class ShareRecord(Base):
+#     __tablename__ = 'share_record'
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     create_time = Column(DateTime, server_default=func.now())
+#     edit_time = Column(DateTime, server_default=func.now(), server_onupdate=func.now())
+#
+#     user_id = Column(ForeignKey('user.id'), nullable=False)
+#     user = relationship('User', back_populates='share_records')
+#
+#     share_code_id = Column(ForeignKey('share_code.id'), nullable=False)
+#     share_code = relationship('ShareCode', back_populates='share_records')
+#
+#     @staticmethod
+#     def get_record_by_user_id_and_share_code_id(session: Session, user_id, share_code):
+#         code = session.query(ShareCode).filter(ShareCode.code == share_code).first()
+#         if code is None:
+#             return None
+#         return session.query(ShareRecord).filter(
+#             ShareRecord.user_id == user_id,
+#             ShareRecord.share_code_id == code.id
+#         ).first()
+#
+#     @staticmethod
+#     def new_record(session: Session, share_code_id, line_id):
+#         user = User.create_or_get(session, line_id)
+#         share_record = ShareRecord(user_id=user.id, share_code_id=share_code_id)
+#         session.add(share_record)
+#         session.commit()
+#         return share_record
 
 
 class EventSpot(Base):

@@ -58,27 +58,32 @@ def hello_world():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     reply = text_message_handler(event)
-    line_bot_api.reply_message(event.reply_token, reply)
+    if reply:
+        line_bot_api.reply_message(event.reply_token, reply)
+    # line_bot_api.reply_message(event.reply_token, reply)
 
 
 # postback message handler
 @handler.add(PostbackEvent)
 def handle_postback_message(event):
     reply = postback_message_handler(event)
-    line_bot_api.reply_message(event.reply_token, reply)
+    if reply:
+        line_bot_api.reply_message(event.reply_token, reply)
 
 
 # follow event handler
 @handler.add(FollowEvent)
 def friend_added(event):
     reply = followed_event_handler(event)
-    line_bot_api.reply_message(event.reply_token, reply)
+    if reply:
+        line_bot_api.reply_message(event.reply_token, reply)
 
 
 @handler.add(JoinEvent)
 def group_joined(event):
     reply = joined_event_handler(event)
-    line_bot_api.reply_message(event.reply_token, reply)
+    if reply:
+        line_bot_api.reply_message(event.reply_token, reply)
 
 
 # event_view = EventView.as_view('event_api')
