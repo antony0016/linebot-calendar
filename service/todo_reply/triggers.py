@@ -10,6 +10,7 @@ from service.todo_reply.text_functions import (
     show_code_events,
     reminder_edit_options,
     bot_action_list,
+    my_console
 )
 
 from service.todo_reply.postback_functions import (
@@ -24,6 +25,7 @@ from service.todo_reply.postback_functions import (
     member_join,
     member_leave,
     new_share_code,
+    push_to_group,
 )
 
 from service.todo_reply.text_other_functions import (
@@ -92,6 +94,10 @@ todo_text_replies = [
         'trigger': 'star-sign',
         'reply': star_sign_menu,
     },
+    {
+        'trigger': 'console',
+        'reply': my_console,
+    },
 ]
 
 todo_postback_replies = {
@@ -123,6 +129,9 @@ todo_postback_replies = {
         # leave event
         # ok
         'delete': member_leave,
+    },
+    'console': {
+        'push': push_to_group,
     },
     'menu': {
         # create event menu

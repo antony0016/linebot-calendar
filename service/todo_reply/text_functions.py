@@ -413,6 +413,33 @@ def show_code_events(event):
     )
 
 
+def my_console(event):
+    session = create_session()
+    events = Event.api_all_event(session, event.source.user_id)
+    console_events = []
+    data = PostbackRequest(model='notify', method='push')
+    for the_event in events:
+        if the_event.setting.group_id is None:
+            continue
+        console_events.append(CarouselColumn(
+            title=the_event.setting.title,
+            text=the_event.setting.description,
+            actions=[
+                PostbackTemplateAction(
+                    label='推播',
+                    data=data.dumps(data={'event_id': the_event.id}),
+                )
+            ]
+        ))
+    session.close()
+    return TemplateSendMessage(
+        alt_text='我的控制台',
+        template=CarouselTemplate(
+            columns=console_events
+        )
+    )
+
+
 def db_test(event):
     print(event)
     session = create_session()

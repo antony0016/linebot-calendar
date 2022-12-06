@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 
 from service.todo_reply.text_functions import create_menu
-
+from public.instance import line_bot_api
 from model.db import create_session
 # linebot imports
 from linebot.models import (
@@ -293,3 +293,23 @@ def member_leave(event):
     if de_count > 0:
         return TextSendMessage(text='刪除成功')
     return TextSendMessage(text='刪除失敗')
+
+
+def push_to_group(event):
+    data = PostbackRequest(raw_data=event.postback.data).data
+    session = create_session()
+    the_event = Event.get_event(session, data['event_id'])
+    if the_event is None:
+        return TextSendMessage(text='找不到此活動/代辦事項/提醒')
+    event_members = the_event.members
+    session.close()
+    if len(event_members) == 0:
+        return TextSendMessage(text='此活動/代辦事項/提醒尚無人參加')
+    # line_ids = [member.user.line_id for member in event_members]
+    line_bot_api.push_message(the_event.setting.group_id, TemplateSendMessage(
+        alt_text=the_event.setting.title + '提醒！',
+        template=CarouselTemplate(columns=[
+            the_event.setting.to_line_template(True),
+        ])
+    ))
+    return TextSendMessage(text='已推播至群組', quick_reply=QuickReply(items=get_quick_reply()))
