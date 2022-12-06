@@ -92,7 +92,7 @@ def change_event_status(line_id, event_id, is_done: bool):
 def get_event(line_id, event_id: int = None, group_id: str = None, type_id: int = None):
     session = create_session()
     events = []
-    temp_events = Event.all_event(session, line_id)
+    temp_events = Event.api_all_event(session, line_id)
     for event in temp_events:
         if event_id is not None and event_id != event.id:
             continue

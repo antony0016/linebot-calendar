@@ -109,6 +109,12 @@ class Event(Base):
         return events
 
     @staticmethod
+    def api_all_event(session: Session, line_id):
+        user = User.create_or_get(session, line_id)
+        events = session.query(Event).filter().all()
+        return events
+
+    @staticmethod
     def create_event(session: Session, type_id, line_id, is_group=False, group_id=None):
         event_type = session.query(EventType).filter(EventType.id == type_id).first()
         user = User.create_or_get(session, line_id)
