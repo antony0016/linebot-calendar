@@ -300,10 +300,11 @@ def push_to_group(event):
     session = create_session()
     the_event = Event.get_event(session, data['event_id'])
     if the_event is None:
+        session.close()
         return TextSendMessage(text='找不到此活動/代辦事項/提醒')
     event_members = the_event.members
-    session.close()
     if len(event_members) == 0:
+        session.close()
         return TextSendMessage(text='此活動/代辦事項/提醒尚無人參加')
     # line_ids = [member.user.line_id for member in event_members]
     line_bot_api.push_message(the_event.setting.group_id, TemplateSendMessage(
@@ -312,4 +313,5 @@ def push_to_group(event):
             the_event.setting.to_line_template(True),
         ])
     ))
+    session.close()
     return TextSendMessage(text='已推播至群組', quick_reply=QuickReply(items=get_quick_reply()))
