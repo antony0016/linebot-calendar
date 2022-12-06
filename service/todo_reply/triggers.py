@@ -130,7 +130,7 @@ todo_postback_replies = {
         # ok
         'delete': member_leave,
     },
-    'console': {
+    'notify': {
         'push': push_to_group,
     },
     'menu': {
