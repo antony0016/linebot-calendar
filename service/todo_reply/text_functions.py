@@ -306,7 +306,10 @@ def list_todo_option(event):
     ]
     session = create_session()
     event_types = EventType.get_types(session)
+    is_group = event.source.type == 'group'
     for event_type in event_types:
+        if not is_group and event_type.name == "提醒":
+            continue
         columns.append(CarouselColumn(
             title='查詢{}'.format(event_type.name),
             text='查詢{}'.format(event_type.name),
