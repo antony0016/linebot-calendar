@@ -69,7 +69,7 @@ def bot_action_list(event):
                         # search event
                         URITemplateAction(
                             label='搜尋活動',
-                            uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=1{parameter}'
+                            uri=f'https://liff.line.me/1657271223-yNdXKG7O?typeID=1{parameter}'
                         ),
                         # new event
                         URITemplateAction(
@@ -85,7 +85,7 @@ def bot_action_list(event):
                         # search to-do
                         URITemplateAction(
                             label='搜尋待辦事項',
-                            uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=3{parameter}'
+                            uri=f'https://liff.line.me/1657271223-yNdXKG7O?typeID=3{parameter}'
                         ),
                         # new to-do
                         URITemplateAction(
