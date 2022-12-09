@@ -221,13 +221,13 @@ class EventSetting(Base):
             ]
         content = self.to_string(show_short=True)
         template = ButtonsTemplate(
-            title=self.title + (' 時間快到了！' if for_notify else self.title),
+            title=self.title + (' 時間快到了！' if for_notify else ''),
             text=content,
             actions=actions
         )
         if is_column:
             template = CarouselColumn(
-                title=self.title,
+                title=self.title + (' 時間快到了！' if for_notify else ''),
                 text=content,
                 actions=actions
             )
