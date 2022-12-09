@@ -200,7 +200,7 @@ class EventSetting(Base):
             result = f'{"標題：" if with_column else ""}{self.title}{sep}'
         return result[0:56] + '...' if show_short and len(result) > 56 else result
 
-    def to_line_template(self, is_column=False, custom_actions=None, is_override=False):
+    def to_line_template(self, is_column=False, custom_actions=None, is_override=False, for_notify=False):
         request = PostbackRequest(model='event', data={'event_id': self.event_id})
         custom_actions = [] if custom_actions is None else custom_actions
         actions = custom_actions
@@ -221,7 +221,7 @@ class EventSetting(Base):
             ]
         content = self.to_string(show_short=True)
         template = ButtonsTemplate(
-            title=self.title,
+            title=self.title + (' 時間快到了！' if for_notify else self.title),
             text=content,
             actions=actions
         )

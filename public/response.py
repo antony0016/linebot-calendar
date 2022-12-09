@@ -26,7 +26,7 @@ def get_event_details(event_settings: List[EventSetting], is_group=False):
         # actions.append(show_event_members_action(event_setting))
         print(event_setting.start_time)
         columns.append(
-            event_setting.to_line_template(is_column=True, custom_actions=actions)
+            event_setting.to_line_template(is_column=True, custom_actions=actions, for_notify=True)
         )
     return columns
 
