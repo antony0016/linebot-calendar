@@ -310,7 +310,7 @@ def push_to_group(event):
     line_bot_api.push_message(the_event.setting.group_id, TemplateSendMessage(
         alt_text=the_event.setting.title + '提醒！',
         template=CarouselTemplate(columns=[
-            the_event.setting.to_line_template(True),
+            the_event.setting.to_line_template(True, for_notify=True),
         ])
     ))
     session.close()
