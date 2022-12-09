@@ -58,7 +58,7 @@ todo_text_replies = [
         'reply': list_all_todo,
     },
     {
-        'trigger': 'A',
+        'trigger': 'Option',
         'reply': list_todo_option,
     },
     {
