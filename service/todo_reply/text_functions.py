@@ -76,6 +76,10 @@ def bot_action_list(event):
                             label='新增活動',
                             uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=1{parameter}'
                         ),
+                        PostbackTemplateAction(
+                            label='用linebot查看活動',
+                            data='{"model": "event_setting", "method": "read", "data": {"type_id": 1}}'
+                        )
                     ]
                 ),
                 CarouselColumn(
@@ -92,6 +96,10 @@ def bot_action_list(event):
                             label='新增待辦事項',
                             uri=f'https://liff.line.me/1657271223-veVzj6al?typeID=3{parameter}'
                         ),
+                        PostbackTemplateAction(
+                            label='用linebot查看待辦事項',
+                            data='{"model": "event_setting", "method": "read", "data": {"type_id": 3}}'
+                        )
                     ]
                 ),
             ]
