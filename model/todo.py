@@ -377,6 +377,7 @@ class ShareCode(Base):
         for event_id in event_ids:
             event = session.query(Event).filter(Event.id == event_id).first()
             event.share_code_id = share_code.id
+            share_code.events.append(event)
         session.commit()
         return share_code
 
