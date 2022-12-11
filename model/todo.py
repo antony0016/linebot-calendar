@@ -373,11 +373,11 @@ class ShareCode(Base):
             new_code = secrets.token_hex(16)
         share_code = ShareCode(user_id=user.id, code=new_code)
         session.add(share_code)
-        session.commit()
         for event_id in event_ids:
             event = session.query(Event).filter(Event.id == event_id).first()
             event.share_code_id = share_code.id
             share_code.events.append(event)
+        session.add(share_code)
         session.commit()
         return share_code
 
