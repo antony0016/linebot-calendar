@@ -260,10 +260,10 @@ def new_share_code(event):
     events = []
     if the_event is None and data['event_id'] != -1:
         return TextSendMessage(text='找不到此活動/代辦事項/提醒')
+    if data['event_id'] == -1:
+        events = [share_event.id for share_event in Event.all_event(session, line_id)]
     else:
-        if the_event is not None:
-            events.append(the_event.id)
-        events += [share_event.id for share_event in Event.all_event(session, line_id)]
+        events = [the_event.id]
     share_code = ShareCode.create_share_code(session, events, line_id)
     response = TextSendMessage(text='@code={}'.format(share_code.code))
     session.close()
