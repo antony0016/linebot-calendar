@@ -240,7 +240,7 @@ class EventSetting(Base):
         if type_id == -1:
             events = session.query(Event).filter(Event.create_uid == user.id).all()
         else:
-            session.query(Event).filter(
+            events = session.query(Event).filter(
                 Event.type_id == type_id, Event.create_uid == user.id
             ).all()
         event_settings = []
