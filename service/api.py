@@ -1,11 +1,16 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import request, jsonify, views
 
 from model.db import create_session
 from model.todo import Event, EventSetting, EventMember, EventSpot
 from public.instance import line_bot_api, flask_instance
+
+from linebot.models import (
+    TemplateSendMessage,
+    CarouselTemplate,
+)
 
 
 # class UserView(views.MethodView):
@@ -70,6 +75,12 @@ def update_event_status_view(line_id, event_id=None):
     return change_event_status(line_id, event_id, is_done).to_json()
 
 
+@flask_instance.route('/event/notify/check', methods=['GET'])
+def check_notify():
+    check_event_time()
+    return jsonify('ok')
+
+
 def change_event_status(line_id, event_id, is_done: bool):
     response = MyResponse()
     if event_id is None:
@@ -92,7 +103,7 @@ def change_event_status(line_id, event_id, is_done: bool):
 def get_event(line_id, event_id: int = None, group_id: str = None, type_id: int = None):
     session = create_session()
     events = []
-    temp_events = Event.api_all_event(session, line_id)
+    temp_events = Event.api_all_event(session)
     for event in temp_events:
         if event_id is not None and event_id != event.id:
             continue
@@ -195,3 +206,21 @@ def delete_event(line_id, event_id=None):
     else:
         response.data = {'delete_count': delete_count}
     return response
+
+
+def check_event_time():
+    session = create_session()
+    events = Event.api_all_event(session)
+    print(events)
+    for event in events:
+        if event.setting.start_time is not None and event.setting.start_time < datetime.now():
+            time_diff = datetime.now() - event.setting.start_time
+            if time_diff.seconds <= 60:
+                if event.setting.group_id is not None:
+                    line_bot_api.push_message(event.setting.group_id, TemplateSendMessage(
+                        alt_text=event.setting.title + '提醒！',
+                        template=CarouselTemplate(columns=[
+                            event.setting.to_line_template(True, for_notify=True),
+                        ])
+                    ))
+    session.close()

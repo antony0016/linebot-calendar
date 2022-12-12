@@ -109,8 +109,7 @@ class Event(Base):
         return events
 
     @staticmethod
-    def api_all_event(session: Session, line_id):
-        user = User.create_or_get(session, line_id)
+    def api_all_event(session: Session):
         events = session.query(Event).filter().all()
         return events
 

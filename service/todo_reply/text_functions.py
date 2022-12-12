@@ -428,7 +428,8 @@ def show_code_events(event):
 
 def my_console(event):
     session = create_session()
-    events = Event.api_all_event(session, event.source.user_id)
+    events = Event.api_all_event(session)
+    events.reverse()
     console_events = []
     data = PostbackRequest(model='notify', method='push')
     for the_event in events:
