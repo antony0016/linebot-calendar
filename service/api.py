@@ -216,6 +216,12 @@ def check_event_time():
         if event.setting.start_time is not None and event.setting.start_time < datetime.now():
             time_diff = datetime.now() - event.setting.start_time
             if time_diff.seconds <= 60:
+                line_bot_api.push_message(event.create_user.line_id, TemplateSendMessage(
+                    alt_text=event.setting.title + '提醒！',
+                    template=CarouselTemplate(columns=[
+                        event.setting.to_line_template(True, for_notify=True),
+                    ])
+                ))
                 if event.setting.group_id is not None:
                     line_bot_api.push_message(event.setting.group_id, TemplateSendMessage(
                         alt_text=event.setting.title + '提醒！',
