@@ -3,6 +3,7 @@ version: "3.9"
 services:
   web:
     image: sekixu/line-calendar
+    container_name: line-calendar
     restart: always
     command: python app.py
     volumes:
